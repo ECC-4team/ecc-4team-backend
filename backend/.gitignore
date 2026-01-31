@@ -1,0 +1,32 @@
+# =====================
+# Gradle (빌드 산출물)
+# =====================
+build/
+.gradle/
+
+# =====================
+# IntelliJ / IDE
+# =====================
+.idea/
+*.iml
+out/
+
+# =====================
+# OS / 로그
+# =====================
+.DS_Store
+Thumbs.db
+*.log
+
+# =====================
+# 환경 변수
+# =====================
+.env
+
+# =====================
+#Gradle Wrapper는 추적해야 함
+# =====================
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+!gradlew
+!gradlew.bat
