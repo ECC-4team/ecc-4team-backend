@@ -17,6 +17,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @RequestMapping("/trips/{tripId}/places")
 public class TripPlaceController {
+
     private final TripPlaceService tripPlaceService;
 
     // GET /trips/{tripId}/places

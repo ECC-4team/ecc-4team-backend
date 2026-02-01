@@ -13,46 +13,33 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "places")
+
 public class Place {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;              // placeId
+    @Column(name = "place_id")
+    private Long id;
 
-    @Column(nullable = false)
+    @Column(name = "trip_id", nullable = false)
     private Long tripId;
 
-    @Column(nullable = false)
+    @Column(nullable = false,length = 100)
     private String name;
 
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 30)
     private String category;
 
-    private String coverImageUrl;
 
-    /**
-     * 상세 조회용 이미지 URL 목록
-     * - JSON 컬럼 or @ElementCollection 둘 중 하나
-     * - 여기서는 가장 단순한 ElementCollection 사용
-     */
-    @ElementCollection
-    @CollectionTable(
-            name = "place_images",
-            joinColumns = @JoinColumn(name = "place_id")
-    )
-    @Column(name = "image_url")
-    private List<String> imageUrls;
-
-    @Column(nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(nullable = false)
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    /* ===== 생명주기 ===== */
 
     @PrePersist
     protected void onCreate() {
