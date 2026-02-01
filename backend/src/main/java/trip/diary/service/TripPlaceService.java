@@ -88,7 +88,7 @@ public class TripPlaceService {
     }
 
     @Transactional
-    public void createPlace(Long tripId, PlaceRequest request, List<MultipartFile> images){
+    public Long createPlace(Long tripId, PlaceRequest request, List<MultipartFile> images){
 
         //입력 확인
         if(request.name() == null ||request.category() == null ){
@@ -103,6 +103,8 @@ public class TripPlaceService {
         if (images != null) {
             savePhotos(savedPlace, images, request.coverIndex());
         }
+
+        return place.getId();
 
     }
 
