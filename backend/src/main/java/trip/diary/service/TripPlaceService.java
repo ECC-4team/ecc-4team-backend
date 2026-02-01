@@ -52,15 +52,18 @@ public class TripPlaceService {
 
 
     public PlaceDetailResponse getPlace(Long tripId, Long placeId) {
+
+        //특정 장소 조회
         Place place = placeRepository.findByIdAndTripId(placeId, tripId)
                 .orElseThrow(() -> new IllegalArgumentException("place not found"));
 
-
+        //대표 이미지 조회
         String coverImageUrl = placePhotoRepository
                 .findByPlaceIdAndIsCoverTrue(place.getId())
                 .map(PlacePhoto::getImageUrl)
                 .orElse(null);
 
+        //이미지들 조회
         List<String> imageUrls = placePhotoRepository.findByPlaceId(place.getId())
                 .stream()
                 .map(PlacePhoto::getImageUrl)

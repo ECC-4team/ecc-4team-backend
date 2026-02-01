@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import trip.diary.dto.PlaceDetailResponse;
 import trip.diary.dto.PlaceListResponse;
-import trip.diary.dto.SuccessResponse;
 import trip.diary.service.TripPlaceService;
 
 import java.util.List;
@@ -22,19 +21,16 @@ public class TripPlaceController {
 
     // GET /trips/{tripId}/places
     @GetMapping
-    public SuccessResponse<List<PlaceListResponse>> getPlaces( @PathVariable Long tripId){
+    public ResponseEntity<List<PlaceListResponse>> getPlaces( @PathVariable Long tripId){
         List<PlaceListResponse> places=tripPlaceService.getPlaces(tripId);
-        return new SuccessResponse<>(true,places);
+        return ResponseEntity.ok(places);
     }
 
     // GET /trips/{tripId}/places/{placeId}
     @GetMapping("/{placeId}")
-    public SuccessResponse<PlaceDetailResponse> getPlace(
-            @PathVariable Long tripId,
-            @PathVariable Long placeId
-    ) {
+    public ResponseEntity<PlaceDetailResponse> getPlace(@PathVariable Long tripId, @PathVariable Long placeId) {
         PlaceDetailResponse place = tripPlaceService.getPlace(tripId, placeId);
-        return new SuccessResponse<>(true, place);
+        return ResponseEntity.ok(place);
     }
 
 }

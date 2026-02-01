@@ -1,4 +1,4 @@
 package trip.diary.global.exception;
 
-public record ErrorResponse() {
+public record ErrorResponse(String message) {
 }
