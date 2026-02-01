@@ -12,4 +12,6 @@ public interface PlacePhotoRepository extends JpaRepository<PlacePhoto,Long> {
     List<PlacePhoto> findByPlaceId(Long placeId);
 
     List<PlacePhoto> findByPlaceIdInAndIsCoverTrue(List<Long> placeIds);
+
+    void deleteByPlaceId(Long placeId);
 }

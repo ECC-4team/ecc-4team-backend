@@ -1,11 +1,9 @@
-﻿package trip.diary.controller;
+package trip.diary.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import trip.diary.dto.PlaceRequest;
 import trip.diary.dto.PlaceDetailResponse;
 import trip.diary.dto.PlaceListResponse;
 import trip.diary.service.TripPlaceService;
@@ -31,6 +29,13 @@ public class TripPlaceController {
     public ResponseEntity<PlaceDetailResponse> getPlace(@PathVariable Long tripId, @PathVariable Long placeId) {
         PlaceDetailResponse place = tripPlaceService.getPlace(tripId, placeId);
         return ResponseEntity.ok(place);
+    }
+
+    //POST /trips/{tripId}/places
+    @PostMapping
+    public void createPlace(@PathVariable Long tripId, @RequestBody PlaceRequest request){
+
+
     }
 
 }

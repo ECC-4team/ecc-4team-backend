@@ -5,11 +5,13 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "places")
@@ -50,5 +52,20 @@ public class Place {
     @PreUpdate
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
+    }
+
+
+    public static Place create(
+            Long tripId,
+            String name,
+            String description,
+            String category
+    ) {
+        Place place = new Place();
+        place.tripId = tripId;
+        place.name = name;
+        place.description = description;
+        place.category = category;
+        return place;
     }
 }

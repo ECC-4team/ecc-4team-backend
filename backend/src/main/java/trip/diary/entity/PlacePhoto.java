@@ -40,4 +40,12 @@ public class PlacePhoto {
     protected void onUpdate() {
         this.updatedAt = java.time.LocalDateTime.now();
     }
+
+    public static PlacePhoto create(Place place,String imageUrl, Boolean isCover){
+        PlacePhoto photo= new PlacePhoto();
+        photo.place=place;
+        photo.imageUrl=imageUrl;
+        photo.isCover=isCover;
+        return photo;
+    }
 }
