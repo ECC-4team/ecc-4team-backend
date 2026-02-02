@@ -1,5 +1,11 @@
 package trip.diary.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +19,7 @@ import trip.diary.service.TripPlaceService;
 
 import java.util.List;
 
+@Tag(name = "여행 장소", description = "여행별 장소 CRUD API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/trips/{tripId}/places")
@@ -20,42 +27,72 @@ public class TripPlaceController {
 
     private final TripPlaceService tripPlaceService;
 
-    // GET /trips/{tripId}/places
+    @Operation(summary = "장소 목록 조회", description = "특정 여행의 모든 장소 목록을 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "조회 성공"),
+            @ApiResponse(responseCode = "404", description = "여행을 찾을 수 없음")
+    })
     @GetMapping
-    public ResponseEntity<List<PlaceListResponse>> getPlaces( @PathVariable Long tripId){
-        List<PlaceListResponse> places=tripPlaceService.getPlaces(tripId);
+    public ResponseEntity<List<PlaceListResponse>> getPlaces(
+            @Parameter(description = "여행 ID", required = true) @PathVariable Long tripId) {
+        List<PlaceListResponse> places = tripPlaceService.getPlaces(tripId);
         return ResponseEntity.ok(places);
     }
 
-    // GET /trips/{tripId}/places/{placeId}
+    @Operation(summary = "장소 상세 조회", description = "특정 장소의 상세 정보를 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "조회 성공"),
+            @ApiResponse(responseCode = "404", description = "여행 또는 장소를 찾을 수 없음")
+    })
     @GetMapping("/{placeId}")
-    public ResponseEntity<PlaceDetailResponse> getPlace(@PathVariable Long tripId, @PathVariable Long placeId) {
+    public ResponseEntity<PlaceDetailResponse> getPlace(
+            @Parameter(description = "여행 ID", required = true) @PathVariable Long tripId,
+            @Parameter(description = "장소 ID", required = true) @PathVariable Long placeId) {
         PlaceDetailResponse place = tripPlaceService.getPlace(tripId, placeId);
         return ResponseEntity.ok(place);
     }
 
-    //POST /trips/{tripId}/places
+    @Operation(summary = "장소 등록", description = "새로운 장소를 등록합니다. multipart/form-data로 data(JSON)와 images(파일)를 전송합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "등록 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+            @ApiResponse(responseCode = "404", description = "여행을 찾을 수 없음")
+    })
     @PostMapping(consumes = "multipart/form-data")
-    public ResponseEntity<PlaceResponse> createPlace(@PathVariable Long tripId, @RequestPart("data") PlaceRequest request,
-                            @RequestPart(value = "images",required = false) List<MultipartFile> images){
-        Long placeId= tripPlaceService.createPlace(tripId,request,images);
+    public ResponseEntity<PlaceResponse> createPlace(
+            @Parameter(description = "여행 ID", required = true) @PathVariable Long tripId,
+            @Parameter(description = "장소 정보 (JSON)", required = true) @RequestPart("data") PlaceRequest request,
+            @Parameter(description = "장소 이미지 파일 목록") @RequestPart(value = "images", required = false) List<MultipartFile> images) {
+        Long placeId = tripPlaceService.createPlace(tripId, request, images);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new PlaceResponse(placeId));
     }
 
-    // PATCH /trips/{tripId}/places/{placeId}
+    @Operation(summary = "장소 수정", description = "기존 장소 정보를 수정합니다. multipart/form-data로 data(JSON)와 images(파일)를 전송합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "수정 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+            @ApiResponse(responseCode = "404", description = "여행 또는 장소를 찾을 수 없음")
+    })
     @PatchMapping(value = "/{placeId}", consumes = "multipart/form-data")
-    public ResponseEntity<PlaceResponse> updatePlace(@PathVariable Long tripId, @PathVariable Long placeId,
-            @RequestPart("data") PlaceRequest request,
-            @RequestPart(value = "images", required = false) List<MultipartFile> images
-    ) {
+    public ResponseEntity<PlaceResponse> updatePlace(
+            @Parameter(description = "여행 ID", required = true) @PathVariable Long tripId,
+            @Parameter(description = "장소 ID", required = true) @PathVariable Long placeId,
+            @Parameter(description = "장소 정보 (JSON)", required = true) @RequestPart("data") PlaceRequest request,
+            @Parameter(description = "장소 이미지 파일 목록") @RequestPart(value = "images", required = false) List<MultipartFile> images) {
         tripPlaceService.updatePlace(tripId, placeId, request, images);
         return ResponseEntity.ok(new PlaceResponse(placeId));
     }
 
-    // DELETE /trips/{tripId}/places/{placeId}
+    @Operation(summary = "장소 삭제", description = "특정 장소를 삭제합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "삭제 성공"),
+            @ApiResponse(responseCode = "404", description = "여행 또는 장소를 찾을 수 없음")
+    })
     @DeleteMapping("/{placeId}")
-    public ResponseEntity<Void> deletePlace(@PathVariable Long tripId, @PathVariable Long placeId) {
+    public ResponseEntity<Void> deletePlace(
+            @Parameter(description = "여행 ID", required = true) @PathVariable Long tripId,
+            @Parameter(description = "장소 ID", required = true) @PathVariable Long placeId) {
         tripPlaceService.deletePlace(tripId, placeId);
         return ResponseEntity.noContent().build();
     }

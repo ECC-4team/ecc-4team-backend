@@ -9,6 +9,7 @@ import trip.diary.dto.PlaceDetailResponse;
 import trip.diary.dto.PlaceListResponse;
 import trip.diary.entity.Place;
 import trip.diary.entity.PlacePhoto;
+import trip.diary.global.exception.NotFoundException;
 import trip.diary.global.image.ImageStorageService;
 import trip.diary.repository.PlacePhotoRepository;
 import trip.diary.repository.PlaceRepository;
@@ -60,7 +61,8 @@ public class TripPlaceService {
 
         //특정 장소 조회
         Place place = placeRepository.findByIdAndTripId(placeId, tripId)
-                .orElseThrow(() -> new IllegalArgumentException("place not found"));
+                .orElseThrow(() -> new NotFoundException("place not found"));
+
 
         //대표 이미지 조회
         String coverImageUrl = placePhotoRepository
@@ -91,6 +93,10 @@ public class TripPlaceService {
     public Long createPlace(Long tripId, PlaceRequest request, List<MultipartFile> images){
 
         //입력 확인
+        if (request == null) {
+            throw new IllegalArgumentException("요청이 비어있습니다");
+        }
+
         if(request.name() == null ||request.category() == null ){
             throw new IllegalArgumentException("필수 입력칸이 비어있습니다");
         }
@@ -104,7 +110,7 @@ public class TripPlaceService {
             savePhotos(savedPlace, images, request.coverIndex());
         }
 
-        return place.getId();
+        return savedPlace.getId();
 
     }
 
@@ -112,7 +118,8 @@ public class TripPlaceService {
     public void updatePlace(Long tripId,Long placeId,PlaceRequest request,List<MultipartFile> images){
         //장소 게시물 조회
         Place place=placeRepository.findByIdAndTripId(placeId,tripId)
-                .orElseThrow(() -> new IllegalArgumentException("place not found"));;
+                .orElseThrow(() -> new NotFoundException("place not found"));
+
 
         if (request == null) {
             throw new IllegalArgumentException("요청이 비어있습니다");
@@ -130,20 +137,19 @@ public class TripPlaceService {
         }
 
         // 이미지가 오면 → 기존 삭제 후 전체 교체
-        if (images != null) {
+        if (images != null && !images.isEmpty()) {
             placePhotoRepository.deleteByPlaceId(placeId);
-
-            if (!images.isEmpty()) {
-                savePhotos(place, images, request.coverIndex());
-            }
+            savePhotos(place, images, request.coverIndex());
         }
+
     }
 
     @Transactional
     public void deletePlace(Long tripId,Long placeId){
         //장소 게시물 조회
         Place place= placeRepository.findByIdAndTripId(placeId,tripId)
-                .orElseThrow(() -> new IllegalArgumentException("place not found"));
+                .orElseThrow(() -> new NotFoundException("place not found"));
+
         //사진 삭제
         placePhotoRepository.deleteByPlaceId(placeId);
         //장소 게시물 삭제

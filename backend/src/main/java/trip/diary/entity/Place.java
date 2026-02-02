@@ -1,6 +1,5 @@
 package trip.diary.entity;
 
-
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -8,7 +7,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Getter
 @Setter
@@ -26,7 +24,7 @@ public class Place {
     @Column(name = "trip_id", nullable = false)
     private Long tripId;
 
-    @Column(nullable = false,length = 100)
+    @Column(nullable = false, length = 100)
     private String name;
 
     @Column(columnDefinition = "TEXT")
@@ -35,13 +33,11 @@ public class Place {
     @Column(nullable = false, length = 30)
     private String category;
 
-
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
-
 
     @PrePersist
     protected void onCreate() {
@@ -54,13 +50,11 @@ public class Place {
         this.updatedAt = LocalDateTime.now();
     }
 
-
     public static Place create(
             Long tripId,
             String name,
             String description,
-            String category
-    ) {
+            String category) {
         Place place = new Place();
         place.tripId = tripId;
         place.name = name;
