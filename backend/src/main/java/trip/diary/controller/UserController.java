@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import trip.diary.dto.UserLogoutResponse;
 
 import java.time.LocalDateTime;
 
@@ -67,5 +68,12 @@ public class UserController {
     public ResponseEntity<UserLoginResponse> login(@RequestBody @Valid UserLoginRequest request) {
         UserLoginResponse response = userService.login(request);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<UserLogoutResponse> logout() {
+        return ResponseEntity.ok(
+                new UserLogoutResponse(200, "정상적으로 로그아웃되었습니다.")
+        );
     }
 }
