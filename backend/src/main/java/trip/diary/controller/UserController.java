@@ -76,4 +76,9 @@ public class UserController {
                 new UserLogoutResponse(200, "정상적으로 로그아웃되었습니다.")
         );
     }
+
+    @GetMapping("/me")
+    public ResponseEntity<String> myInfo() {
+        return ResponseEntity.ok("당신은 인증된 유저입니다!");
+    }
 }

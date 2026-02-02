@@ -1,5 +1,6 @@
 package trip.diary.global.config;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -8,10 +9,16 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import trip.diary.global.jwt.JwtAuthenticationFilter;
+import trip.diary.global.jwt.JwtTokenProvider;
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final JwtTokenProvider jwtTokenProvider;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -26,6 +33,8 @@ public class SecurityConfig {
                         .requestMatchers("/users/signup", "/users/login", "/users/logout", "/h2-console/**").permitAll() // 회원가입, H2 콘솔은 누구나 접근 가능
                         .anyRequest().authenticated() // 나머지는 로그인해야 접근 가능
                 )
+                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class)
+
                 .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable())); // H2 콘솔 깨짐 방지
 
         return http.build();
