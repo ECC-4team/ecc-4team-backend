@@ -1,6 +1,8 @@
 package trip.diary.controller;
 
 import jakarta.validation.Valid;
+import trip.diary.dto.UserLoginRequest;
+import trip.diary.dto.UserLoginResponse;
 import trip.diary.dto.UserSignupRequest;
 import trip.diary.entity.User;
 import trip.diary.service.UserService;
@@ -59,5 +61,11 @@ public class UserController {
 
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")
         private LocalDateTime createdAt;
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<UserLoginResponse> login(@RequestBody @Valid UserLoginRequest request) {
+        UserLoginResponse response = userService.login(request);
+        return ResponseEntity.ok(response);
     }
 }
