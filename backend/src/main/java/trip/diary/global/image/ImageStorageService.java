@@ -10,6 +10,7 @@ import java.nio.file.*;
 import java.util.Set;
 import java.util.UUID;
 
+@Service
 public class ImageStorageService {
 
     @Value("${file.upload-dir:uploads/images}")
