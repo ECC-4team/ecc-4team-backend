@@ -104,9 +104,10 @@ public class TripPlaceService {
             throw new IllegalArgumentException("필수 입력칸이 비어있습니다");
         }
 
-        Trip tripRef = tripRepository.getReferenceById(tripId);
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new NotFoundException("trip not found"));
 
-        Place place = Place.create(tripRef, request.name(), request.description(), request.category());
+        Place place = Place.create(trip, request.name(), request.description(), request.category());
 
         Place savedPlace= placeRepository.save(place);
 
