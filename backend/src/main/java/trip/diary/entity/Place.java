@@ -21,8 +21,9 @@ public class Place {
     @Column(name = "place_id")
     private Long id;
 
-    @Column(name = "trip_id", nullable = false)
-    private Long tripId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "trip_id", nullable = false)
+    private Trip trip;
 
     @Column(nullable = false, length = 100)
     private String name;
@@ -51,15 +52,19 @@ public class Place {
     }
 
     public static Place create(
-            Long tripId,
+            Trip trip,
             String name,
             String description,
             String category) {
         Place place = new Place();
-        place.tripId = tripId;
+        place.trip = trip;
         place.name = name;
         place.description = description;
         place.category = category;
         return place;
+    }
+
+    public Long getTripId() {
+        return (trip == null) ? null : trip.getId();
     }
 }
