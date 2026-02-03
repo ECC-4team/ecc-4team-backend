@@ -1,0 +1,34 @@
+package trip.diary.controller;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import trip.diary.dto.TripCreateRequest;
+import trip.diary.dto.TripCreateResponse;
+import trip.diary.service.TripService;
+
+@RestController
+@RequestMapping("/trips")
+@RequiredArgsConstructor
+public class TripController {
+
+    private final TripService tripService;
+
+    @PostMapping
+    public ResponseEntity<TripCreateResponse> createTrip(
+            @RequestBody @Valid TripCreateRequest request,
+            @AuthenticationPrincipal UserDetails userDetails // 토큰에서 유저 정보(userId) 추출
+    ) {
+        // userDetails.getUsername()에는 userId(로그인 아이디)가 들어감
+        TripCreateResponse response = tripService.createTrip(request, userDetails.getUsername());
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+}
