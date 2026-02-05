@@ -10,7 +10,10 @@ import org.springframework.web.bind.annotation.*;
 import trip.diary.dto.TripCreateRequest;
 import trip.diary.dto.TripCreateResponse;
 import trip.diary.dto.TripListResponse;
+import trip.diary.dto.TripUpdateRequest;
 import trip.diary.service.TripService;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/trips")
@@ -36,6 +39,30 @@ public class TripController {
         TripListResponse response = tripService.getTrips(userDetails.getUsername());
 
         // 200 OK 응답
+        return ResponseEntity.ok(response);
+    }
+
+    // 여행 상세 조회
+    @GetMapping("/{tripId}")
+    public ResponseEntity<Map<String, Object>> getTripDetail(
+            @PathVariable Long tripId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        // 서비스 호출
+        Map<String, Object> response = tripService.getTripDetail(tripId, userDetails.getUsername());
+
+        return ResponseEntity.ok(response);
+    }
+
+    // 여행 수정 API
+    @PatchMapping("/{tripId}")
+    public ResponseEntity<Map<String, Object>> updateTrip(
+            @PathVariable Long tripId,
+            @RequestBody TripUpdateRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        Map<String, Object> response = tripService.updateTrip(tripId, request, userDetails.getUsername());
+
         return ResponseEntity.ok(response);
     }
 }

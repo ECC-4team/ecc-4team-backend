@@ -3,15 +3,13 @@ package trip.diary.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import trip.diary.dto.TripCreateRequest;
-import trip.diary.dto.TripCreateResponse;
-import trip.diary.dto.TripDto;
-import trip.diary.dto.TripListResponse;
+import trip.diary.dto.*;
 import trip.diary.entity.Trip;
 import trip.diary.entity.User;
 import trip.diary.repository.TripRepository;
 import trip.diary.repository.UserRepository;
 
+import java.util.Map;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -82,5 +80,60 @@ public class TripService {
 
         // 4. 최종 응답 반환
         return new TripListResponse(200, "여행 목록 조회 성공", tripDtos);
+    }
+
+    // 여행 상세 조회 (GET /trips/{tripId})
+    @Transactional(readOnly = true)
+    public Map<String, Object> getTripDetail(Long tripId, String userId) {
+        // 1. 여행 찾기
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 여행입니다."));
+
+        // 2. 권한 확인 (작성자 본인만 조회 가능)
+        if (!trip.getUser().getUserId().equals(userId)) {
+            throw new IllegalArgumentException("조회 권한이 없습니다.");
+        }
+
+        // 3. DTO 변환
+        TripDetailDto data = TripDetailDto.from(trip);
+
+        // 4. 응답 구조 맞추기 (code, message, data)
+        return Map.of(
+                "code", 200,
+                "message", "여행 상세 정보를 조회했습니다.",
+                "data", data
+        );
+    }
+
+    // 여행 수정 (PATCH)
+    @Transactional // <--- ★ 데이터 변경 시 필수!
+    public Map<String, Object> updateTrip(Long tripId, TripUpdateRequest request, String userId) {
+        // 1. 여행 찾기
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 여행입니다."));
+
+        // 2. 권한 확인 (내 여행인지)
+        if (!trip.getUser().getUserId().equals(userId)) {
+            throw new IllegalArgumentException("수정 권한이 없습니다.");
+        }
+
+        // 3. 내용 수정 (Entity의 update 메서드 호출)
+        trip.update(
+                request.getTitle(),
+                request.getDestination(),
+                request.getStartDate(),
+                request.getEndDate(),
+                request.getImageUrl(),
+                request.getNote()
+        );
+
+        // 4. 수정된 결과 반환 (프론트엔드 반영용)
+        TripDetailDto data = TripDetailDto.from(trip);
+
+        return Map.of(
+                "code", 200,
+                "message", "여행 정보가 수정되었습니다.",
+                "data", data
+        );
     }
 }

@@ -11,5 +11,6 @@ public class TripUpdateRequest {
     private String destination;
     private LocalDate startDate;
     private LocalDate endDate;
+    private String imageUrl;
     private String note; // DB의 description으로 매핑
 }
