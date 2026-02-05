@@ -26,5 +26,7 @@ public class TripCreateRequest {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate endDate;
 
+    private String imageUrl;
+
     private String note; // DB의 description에 매핑될 예정
 }
