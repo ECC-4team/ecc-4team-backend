@@ -1,6 +1,7 @@
 package trip.diary.global.exception;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
 @RestControllerAdvice
@@ -16,6 +17,14 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleBadRequest(IllegalArgumentException e) {
         return new ErrorResponse(e.getMessage());
+    }
+
+    // @Valid 검증 실패 시 (NOT NULL 등)
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleValidation(MethodArgumentNotValidException e) {
+        String errorMessage = e.getBindingResult().getFieldError().getDefaultMessage();
+        return new ErrorResponse(errorMessage);
     }
 
     @ExceptionHandler(Exception.class)
