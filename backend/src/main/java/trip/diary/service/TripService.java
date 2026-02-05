@@ -22,6 +22,8 @@ public class TripService {
     private final TripRepository tripRepository;
     private final UserRepository userRepository;
 
+    private static final String DEFAULT_IMAGE_URL = "https://i.imgur.com/bM8yb4v.jpeg";
+
     // 여행 생성
     public Long createTrip(TripCreateRequest request, String userId) {
         // 현재 로그인한 유저 찾기
@@ -44,7 +46,7 @@ public class TripService {
             imageUrl = request.getImageUrl();
         } else {
             // 없으면 기본 이미지 사용
-            imageUrl = "https://images.unsplash.com/photo-1507525428034-b723cf961d3e";
+            imageUrl = DEFAULT_IMAGE_URL;
         }
 
         // Trip 엔티티 생성
@@ -109,7 +111,7 @@ public class TripService {
         // 값을 빈 문자열("")로 보낸 경우 기본 이미지로 초기화
         String imageUrlToUse = request.getImageUrl();
         if (imageUrlToUse != null && imageUrlToUse.isBlank()) {
-            imageUrlToUse = "https://images.unsplash.com/photo-1507525428034-b723cf961d3e";
+            imageUrlToUse = DEFAULT_IMAGE_URL;
         }
 
         // 날짜 유효성 검사
@@ -127,7 +129,7 @@ public class TripService {
                 request.getDestination(),
                 request.getStartDate(),
                 request.getEndDate(),
-                request.getImageUrl(),
+                imageUrlToUse,
                 request.getDescription()
         );
 

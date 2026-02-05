@@ -30,7 +30,7 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable) // API 개발 시 보통 끔
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/images/**", "/css/**", "/js/**").permitAll()
+                        .requestMatchers("/css/**", "/js/**").permitAll()
                         .requestMatchers("/users/**", "/h2-console/**").permitAll()
                         .anyRequest().authenticated() // 나머지는 로그인해야 접근 가능
                 )
