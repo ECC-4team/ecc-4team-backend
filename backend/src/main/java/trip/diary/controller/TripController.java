@@ -30,7 +30,7 @@ public class TripController {
 
         // { success: true, data: { "tripId": 1 } }
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok(Map.of("tripId", tripId)));
+                .body(ApiResponse.success(Map.of("tripId", tripId)));
     }
 
     // 여행 목록 조회
@@ -39,7 +39,7 @@ public class TripController {
             @AuthenticationPrincipal UserDetails userDetails) {
 
         List<TripDto> trips = tripService.getTrips(userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.ok(trips));
+        return ResponseEntity.ok(ApiResponse.success(trips));
     }
 
     // 여행 상세 조회
@@ -49,18 +49,19 @@ public class TripController {
             @AuthenticationPrincipal UserDetails userDetails) {
 
         TripDetailDto data = tripService.getTripDetail(tripId, userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.ok(data));
+        return ResponseEntity.ok(ApiResponse.success(data));
     }
 
     // 여행 수정
     @PatchMapping("/{tripId}")
-    public ResponseEntity<ApiResponse<TripDetailDto>> updateTrip(
+    public ResponseEntity<ApiResponse<Void>> updateTrip(
             @PathVariable Long tripId,
-            @RequestBody TripUpdateRequest request,
+            @Valid @RequestBody TripUpdateRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
 
-        TripDetailDto data = tripService.updateTrip(tripId, request, userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.ok(data));
+        tripService.updateTrip(tripId, request, userDetails.getUsername());
+
+        return ResponseEntity.ok(ApiResponse.success());
     }
 
     // 여행 삭제
@@ -71,7 +72,6 @@ public class TripController {
 
         tripService.deleteTrip(tripId, userDetails.getUsername());
 
-        // { success: true, data: null }
-        return ResponseEntity.ok(ApiResponse.ok());
+        return ResponseEntity.ok(ApiResponse.success());
     }
 }

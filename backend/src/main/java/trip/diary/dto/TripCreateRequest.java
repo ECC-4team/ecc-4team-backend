@@ -3,6 +3,7 @@ package trip.diary.dto;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -12,10 +13,11 @@ import java.time.LocalDate;
 @NoArgsConstructor
 public class TripCreateRequest {
 
-    @NotBlank(message = "여행 제목을 입력해주세요.")
+    @Size(max = 50, message = "여행 제목은 50자 이내여야 합니다.")
     private String title;
 
     @NotBlank(message = "여행 장소를 입력해주세요.")
+    @Size(max = 100, message = "여행 장소는 100자 이내여야 합니다.")
     private String destination;
 
     @NotNull(message = "시작 날짜를 입력해주세요.")
@@ -28,5 +30,5 @@ public class TripCreateRequest {
 
     private String imageUrl;
 
-    private String note; // DB의 description에 매핑될 예정
+    private String description;
 }

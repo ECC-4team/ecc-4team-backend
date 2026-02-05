@@ -28,7 +28,7 @@ public class Trip {
     @JoinColumn(name = "user_id", nullable = false) // ERD: user_id (FK)
     private User user;
 
-    @Column(nullable = false, length = 50)
+    @Column(length = 50)
     private String title; // ERD: title
 
     @Column(nullable = false, length = 100)

@@ -30,6 +30,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ErrorResponse handleException(Exception e) {
+        e.printStackTrace(); // 서버 오류 파악용 콘솔 로그 출력
         return new ErrorResponse("서버 오류가 발생했습니다");
     }
 }

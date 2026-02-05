@@ -25,7 +25,7 @@ public class UserService {
     public User signup(UserSignupRequest request) {
         // 1. 아이디 중복 검사
         if (userRepository.findByUserId(request.getUserId()).isPresent()) {
-            throw new IllegalStateException("이미 존재하는 아이디입니다.");
+            throw new IllegalArgumentException("이미 존재하는 아이디입니다.");
         }
 
         // 2. 비밀번호 암호화
@@ -41,10 +41,11 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    // 로그인
     public UserLoginDto login(UserLoginRequest request) {
         // 1. 유저 확인
         User user = userRepository.findByUserId(request.getUserId())
-                .orElseThrow(() -> new NotFoundException("아이디 또는 비밀번호가 일치하지 않습니다."));
+                .orElseThrow(() -> new IllegalArgumentException("아이디 또는 비밀번호가 일치하지 않습니다."));
 
         // 2. 비밀번호 확인
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
@@ -59,5 +60,21 @@ public class UserService {
                 .userId(user.getUserId())
                 .accessToken(accessToken)
                 .build();
+    }
+
+    // 로그아웃
+    public void logout(String authHeader) {
+        // 1. 헤더가 없거나 형식이 틀린 경우
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new IllegalArgumentException("인증 정보가 유효하지 않습니다.");
+        }
+
+        // 2. 토큰 값만 추출 ("Bearer " 제거)
+        String token = authHeader.substring(7);
+
+        // 3. 토큰 자체가 유효한지 검사 (위변조, 만료 등)
+        if (!jwtTokenProvider.validateToken(token)) {
+            throw new IllegalArgumentException("유효하지 않은 토큰입니다.");
+        }
     }
 }

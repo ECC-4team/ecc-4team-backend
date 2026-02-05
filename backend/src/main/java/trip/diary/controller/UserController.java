@@ -28,7 +28,7 @@ public class UserController {
 
         // { success: true, data: { "userId": "...", "message": "..." } }
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok(Map.of(
+                .body(ApiResponse.success(Map.of(
                         "userId", savedUser.getUserId(),
                         "message", "회원가입이 완료되었습니다."
                 )));
@@ -38,18 +38,25 @@ public class UserController {
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<UserLoginDto>> login(@RequestBody @Valid UserLoginRequest request) {
         UserLoginDto loginDto = userService.login(request);
-        return ResponseEntity.ok(ApiResponse.ok(loginDto));
+        return ResponseEntity.ok(ApiResponse.success(loginDto));
     }
 
     // 로그아웃
+    /*
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<String>> logout() {
         return ResponseEntity.ok(ApiResponse.ok("로그아웃 되었습니다."));
+    }
+     */
+    @PostMapping("/logout")
+    public ApiResponse<String> logout(@RequestHeader(value = "Authorization", required = false) String authHeader) {
+        userService.logout(authHeader);
+        return ApiResponse.success("로그아웃 되었습니다.");
     }
 
     // 내 정보 확인 (테스트용)
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<String>> myInfo() {
-        return ResponseEntity.ok(ApiResponse.ok("인증된 유저입니다!"));
+        return ResponseEntity.ok(ApiResponse.success("인증된 유저입니다!"));
     }
 }
