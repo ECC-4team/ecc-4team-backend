@@ -7,12 +7,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-import trip.diary.dto.TripCreateRequest;
-import trip.diary.dto.TripCreateResponse;
-import trip.diary.dto.TripListResponse;
-import trip.diary.dto.TripUpdateRequest;
+import trip.diary.dto.*;
 import trip.diary.service.TripService;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -22,58 +20,58 @@ public class TripController {
 
     private final TripService tripService;
 
+    // 여행 생성
     @PostMapping
-    public ResponseEntity<TripCreateResponse> createTrip(
+    public ResponseEntity<ApiResponse<Map<String, Long>>> createTrip(
             @RequestBody @Valid TripCreateRequest request,
-            @AuthenticationPrincipal UserDetails userDetails // 토큰에서 유저 정보(userId) 추출
+            @AuthenticationPrincipal UserDetails userDetails
     ) {
-        // userDetails.getUsername()에는 userId(로그인 아이디)가 들어감
-        TripCreateResponse response = tripService.createTrip(request, userDetails.getUsername());
+        Long tripId = tripService.createTrip(request, userDetails.getUsername());
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        // { success: true, data: { "tripId": 1 } }
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.ok(Map.of("tripId", tripId)));
     }
 
+    // 여행 목록 조회
     @GetMapping
-    public ResponseEntity<TripListResponse> getTrips(@AuthenticationPrincipal UserDetails userDetails) {
-        // 서비스 호출
-        TripListResponse response = tripService.getTrips(userDetails.getUsername());
+    public ResponseEntity<ApiResponse<List<TripDto>>> getTrips(
+            @AuthenticationPrincipal UserDetails userDetails) {
 
-        // 200 OK 응답
-        return ResponseEntity.ok(response);
+        List<TripDto> trips = tripService.getTrips(userDetails.getUsername());
+        return ResponseEntity.ok(ApiResponse.ok(trips));
     }
 
     // 여행 상세 조회
     @GetMapping("/{tripId}")
-    public ResponseEntity<Map<String, Object>> getTripDetail(
+    public ResponseEntity<ApiResponse<TripDetailDto>> getTripDetail(
             @PathVariable Long tripId,
             @AuthenticationPrincipal UserDetails userDetails) {
 
-        // 서비스 호출
-        Map<String, Object> response = tripService.getTripDetail(tripId, userDetails.getUsername());
-
-        return ResponseEntity.ok(response);
+        TripDetailDto data = tripService.getTripDetail(tripId, userDetails.getUsername());
+        return ResponseEntity.ok(ApiResponse.ok(data));
     }
 
-    // 여행 수정 API
+    // 여행 수정
     @PatchMapping("/{tripId}")
-    public ResponseEntity<Map<String, Object>> updateTrip(
+    public ResponseEntity<ApiResponse<TripDetailDto>> updateTrip(
             @PathVariable Long tripId,
             @RequestBody TripUpdateRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
 
-        Map<String, Object> response = tripService.updateTrip(tripId, request, userDetails.getUsername());
-
-        return ResponseEntity.ok(response);
+        TripDetailDto data = tripService.updateTrip(tripId, request, userDetails.getUsername());
+        return ResponseEntity.ok(ApiResponse.ok(data));
     }
 
-    // 여행 삭제 API
+    // 여행 삭제
     @DeleteMapping("/{tripId}")
-    public ResponseEntity<Map<String, Object>> deleteTrip(
+    public ResponseEntity<ApiResponse<Void>> deleteTrip(
             @PathVariable Long tripId,
             @AuthenticationPrincipal UserDetails userDetails) {
 
-        Map<String, Object> response = tripService.deleteTrip(tripId, userDetails.getUsername());
+        tripService.deleteTrip(tripId, userDetails.getUsername());
 
-        return ResponseEntity.ok(response);
+        // { success: true, data: null }
+        return ResponseEntity.ok(ApiResponse.ok());
     }
 }

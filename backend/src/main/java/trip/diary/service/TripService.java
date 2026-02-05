@@ -6,12 +6,13 @@ import org.springframework.transaction.annotation.Transactional;
 import trip.diary.dto.*;
 import trip.diary.entity.Trip;
 import trip.diary.entity.User;
+import trip.diary.global.exception.NotFoundException;
 import trip.diary.repository.TripRepository;
 import trip.diary.repository.UserRepository;
 
-import java.util.Map;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -21,7 +22,8 @@ public class TripService {
     private final TripRepository tripRepository;
     private final UserRepository userRepository;
 
-    public TripCreateResponse createTrip(TripCreateRequest request, String userId) {
+    // 여행 생성
+    public Long createTrip(TripCreateRequest request, String userId) {
         // 1. 현재 로그인한 유저 찾기
         User user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
@@ -47,67 +49,41 @@ public class TripService {
                 .destination(request.getDestination())
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
-                .status(status) // 계산된 상태값
+                .status(status)
                 .imageUrl(imageUrl)
                 .description(request.getNote()) // note -> description 매핑
                 .build();
 
-        // 5. DB 저장
-        Trip savedTrip = tripRepository.save(trip);
-
-        // 6. 응답 생성
-        return new TripCreateResponse(
-                201,
-                "여행이 생성되었습니다.",
-                new TripCreateResponse.TripIdData(savedTrip.getId())
-        );
+        return tripRepository.save(trip).getId();
     }
 
     // 여행 목록 조회
     @Transactional(readOnly = true)
-    public TripListResponse getTrips(String userId) {
-        // 1. 유저 확인
+    public List<TripDto> getTrips(String userId) {
         User user = userRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
 
-        // 2. DB에서 여행 목록 조회 (최신순)
-        List<Trip> trips = tripRepository.findAllByUserOrderByStartDateDesc(user);
-
-        // 3. Entity -> DTO 변환
-        List<TripDto> tripDtos = trips.stream()
+        return tripRepository.findAllByUserOrderByStartDateDesc(user).stream()
                 .map(TripDto::from)
-                .toList();
-
-        // 4. 최종 응답 반환
-        return new TripListResponse(200, "여행 목록 조회 성공", tripDtos);
+                .collect(Collectors.toList());
     }
 
     // 여행 상세 조회 (GET /trips/{tripId})
     @Transactional(readOnly = true)
-    public Map<String, Object> getTripDetail(Long tripId, String userId) {
-        // 1. 여행 찾기
+    public TripDetailDto getTripDetail(Long tripId, String userId) {
         Trip trip = tripRepository.findById(tripId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 여행입니다."));
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 여행입니다."));
 
-        // 2. 권한 확인 (작성자 본인만 조회 가능)
         if (!trip.getUser().getUserId().equals(userId)) {
             throw new IllegalArgumentException("조회 권한이 없습니다.");
         }
 
-        // 3. DTO 변환
-        TripDetailDto data = TripDetailDto.from(trip);
-
-        // 4. 응답 구조 맞추기 (code, message, data)
-        return Map.of(
-                "code", 200,
-                "message", "여행 상세 정보를 조회했습니다.",
-                "data", data
-        );
+        return TripDetailDto.from(trip);
     }
 
     // 여행 수정 (PATCH)
     @Transactional // <--- ★ 데이터 변경 시 필수!
-    public Map<String, Object> updateTrip(Long tripId, TripUpdateRequest request, String userId) {
+    public TripDetailDto updateTrip(Long tripId, TripUpdateRequest request, String userId) {
         // 1. 여행 찾기
         Trip trip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 여행입니다."));
@@ -128,21 +104,15 @@ public class TripService {
         );
 
         // 4. 수정된 결과 반환 (프론트엔드 반영용)
-        TripDetailDto data = TripDetailDto.from(trip);
-
-        return Map.of(
-                "code", 200,
-                "message", "여행 정보가 수정되었습니다.",
-                "data", data
-        );
+        return TripDetailDto.from(trip);
     }
 
     // 여행 삭제 (DELETE)
     @Transactional
-    public Map<String, Object> deleteTrip(Long tripId, String userId) {
+    public void deleteTrip(Long tripId, String userId) {
         // 1. 여행 찾기
         Trip trip = tripRepository.findById(tripId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 여행입니다."));
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 여행입니다."));
 
         // 2. 권한 확인 (작성자 검증)
         if (!trip.getUser().getUserId().equals(userId)) {
@@ -151,13 +121,5 @@ public class TripService {
 
         // 3. 삭제 수행
         tripRepository.delete(trip);
-
-        // 4. 응답 생성 (data: null 처리를 위해 HashMap 사용)
-        Map<String, Object> response = new java.util.HashMap<>();
-        response.put("code", 200);
-        response.put("message", "여행이 삭제되었습니다.");
-        response.put("data", null);
-
-        return response;
     }
 }

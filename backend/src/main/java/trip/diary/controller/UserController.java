@@ -1,20 +1,17 @@
 package trip.diary.controller;
 
 import jakarta.validation.Valid;
-import trip.diary.dto.UserLoginRequest;
-import trip.diary.dto.UserLoginResponse;
-import trip.diary.dto.UserSignupRequest;
-import trip.diary.entity.User;
-import trip.diary.service.UserService;
-import com.fasterxml.jackson.annotation.JsonFormat;
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import trip.diary.dto.UserLogoutResponse;
-
+import trip.diary.dto.ApiResponse;
+import trip.diary.dto.UserLoginDto;
+import trip.diary.dto.UserLoginRequest;
+import trip.diary.dto.UserSignupRequest;
+import trip.diary.entity.User;
+import trip.diary.service.UserService;
+import java.util.Map;
 import java.time.LocalDateTime;
 
 @RestController
@@ -24,61 +21,35 @@ public class UserController {
 
     private final UserService userService;
 
+    // 회원가입
     @PostMapping("/signup")
-    public ResponseEntity<SignupResponse> signup(@RequestBody @Valid UserSignupRequest request) {
+    public ResponseEntity<ApiResponse<Map<String, String>>> signup(@RequestBody @Valid UserSignupRequest request) {
         User savedUser = userService.signup(request);
 
-        // 응답 데이터 (data)
-        UserData userData = new UserData(
-                savedUser.getId(),
-                savedUser.getUserId(),
-                savedUser.getCreatedAt()
-        );
-
-        // 전체 응답 구조
-        SignupResponse response = new SignupResponse(
-                201,
-                "회원가입이 완료되었습니다.",
-                userData
-        );
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        // { success: true, data: { "userId": "...", "message": "..." } }
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.ok(Map.of(
+                        "userId", savedUser.getUserId(),
+                        "message", "회원가입이 완료되었습니다."
+                )));
     }
 
-    // --- 응답 DTO (내부 클래스) ---
-    @Data
-    @AllArgsConstructor
-    static class SignupResponse {
-        private int code;
-        private String message;
-        private UserData data;
-    }
-
-    @Data
-    @AllArgsConstructor
-    static class UserData {
-        private Long id;
-        private String userId;
-
-        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")
-        private LocalDateTime createdAt;
-    }
-
+    // 로그인
     @PostMapping("/login")
-    public ResponseEntity<UserLoginResponse> login(@RequestBody @Valid UserLoginRequest request) {
-        UserLoginResponse response = userService.login(request);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<ApiResponse<UserLoginDto>> login(@RequestBody @Valid UserLoginRequest request) {
+        UserLoginDto loginDto = userService.login(request);
+        return ResponseEntity.ok(ApiResponse.ok(loginDto));
     }
 
+    // 로그아웃
     @PostMapping("/logout")
-    public ResponseEntity<UserLogoutResponse> logout() {
-        return ResponseEntity.ok(
-                new UserLogoutResponse(200, "정상적으로 로그아웃되었습니다.")
-        );
+    public ResponseEntity<ApiResponse<String>> logout() {
+        return ResponseEntity.ok(ApiResponse.ok("로그아웃 되었습니다."));
     }
 
+    // 내 정보 확인 (테스트용)
     @GetMapping("/me")
-    public ResponseEntity<String> myInfo() {
-        return ResponseEntity.ok("당신은 인증된 유저입니다!");
+    public ResponseEntity<ApiResponse<String>> myInfo() {
+        return ResponseEntity.ok(ApiResponse.ok("인증된 유저입니다!"));
     }
 }
