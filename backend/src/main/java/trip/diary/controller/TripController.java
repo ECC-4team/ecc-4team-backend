@@ -65,4 +65,15 @@ public class TripController {
 
         return ResponseEntity.ok(response);
     }
+
+    // 여행 삭제 API
+    @DeleteMapping("/{tripId}")
+    public ResponseEntity<Map<String, Object>> deleteTrip(
+            @PathVariable Long tripId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        Map<String, Object> response = tripService.deleteTrip(tripId, userDetails.getUsername());
+
+        return ResponseEntity.ok(response);
+    }
 }

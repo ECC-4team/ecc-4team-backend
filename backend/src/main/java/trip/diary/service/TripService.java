@@ -136,4 +136,28 @@ public class TripService {
                 "data", data
         );
     }
+
+    // 여행 삭제 (DELETE)
+    @Transactional
+    public Map<String, Object> deleteTrip(Long tripId, String userId) {
+        // 1. 여행 찾기
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 여행입니다."));
+
+        // 2. 권한 확인 (작성자 검증)
+        if (!trip.getUser().getUserId().equals(userId)) {
+            throw new IllegalArgumentException("삭제 권한이 없습니다.");
+        }
+
+        // 3. 삭제 수행
+        tripRepository.delete(trip);
+
+        // 4. 응답 생성 (data: null 처리를 위해 HashMap 사용)
+        Map<String, Object> response = new java.util.HashMap<>();
+        response.put("code", 200);
+        response.put("message", "여행이 삭제되었습니다.");
+        response.put("data", null);
+
+        return response;
+    }
 }
