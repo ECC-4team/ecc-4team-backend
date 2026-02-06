@@ -2,9 +2,9 @@ package trip.diary.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import trip.diary.entity.Trip;
+import trip.diary.entity.User;
+import java.util.List;
 
-import java.util.Optional;
-
-public interface TripRepository extends JpaRepository<Trip,Long> {
-
+public interface TripRepository extends JpaRepository<Trip, Long> {
+    List<Trip> findAllByUserOrderByStartDateDesc(User user);
 }
