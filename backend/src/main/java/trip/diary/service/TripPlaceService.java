@@ -9,10 +9,12 @@ import trip.diary.dto.PlaceDetailResponse;
 import trip.diary.dto.PlaceListResponse;
 import trip.diary.entity.Place;
 import trip.diary.entity.PlacePhoto;
+import trip.diary.entity.Trip;
 import trip.diary.global.exception.NotFoundException;
 import trip.diary.global.image.ImageStorageService;
 import trip.diary.repository.PlacePhotoRepository;
 import trip.diary.repository.PlaceRepository;
+import trip.diary.repository.TripRepository;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -24,6 +26,7 @@ public class TripPlaceService {
     private final PlaceRepository placeRepository;
     private final PlacePhotoRepository placePhotoRepository;
     private final ImageStorageService imageStorageService;
+    private final TripRepository tripRepository;
 
 
     public List<PlaceListResponse> getPlaces(Long tripId) {
@@ -101,7 +104,10 @@ public class TripPlaceService {
             throw new IllegalArgumentException("필수 입력칸이 비어있습니다");
         }
 
-        Place place = Place.create(tripId, request.name(), request.description(), request.category());
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new NotFoundException("trip not found"));
+
+        Place place = Place.create(trip, request.name(), request.description(), request.category());
 
         Place savedPlace= placeRepository.save(place);
 
