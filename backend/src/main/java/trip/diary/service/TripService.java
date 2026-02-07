@@ -5,12 +5,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import trip.diary.dto.*;
 import trip.diary.entity.Trip;
+import trip.diary.entity.TripDay;
 import trip.diary.entity.User;
 import trip.diary.global.exception.NotFoundException;
+import trip.diary.repository.TripDayRepository;
 import trip.diary.repository.TripRepository;
 import trip.diary.repository.UserRepository;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -21,6 +24,8 @@ public class TripService {
 
     private final TripRepository tripRepository;
     private final UserRepository userRepository;
+    private final TripDayRepository tripDayRepository;
+
 
     private static final String DEFAULT_IMAGE_URL = "https://i.imgur.com/bM8yb4v.jpeg";
 
@@ -61,7 +66,33 @@ public class TripService {
                 .description(request.getDescription()) // note -> description 매핑
                 .build();
 
-        return tripRepository.save(trip).getId();
+        // Trip 먼저 저장해서 trip_id 확보
+        Trip savedTrip = tripRepository.save(trip);
+
+        //여행 기간만큼 TripDay 자동 생성
+        createTripDays(savedTrip);
+
+        return savedTrip.getId();
+    }
+
+    private void createTripDays(Trip trip) {
+
+        LocalDate date = trip.getStartDate();
+        LocalDate end = trip.getEndDate();
+
+        int dayIndex = 1;
+        List<TripDay> days = new ArrayList<>();
+
+        while (!date.isAfter(end)) {
+            TripDay day = TripDay.create(trip, date, dayIndex);
+            days.add(day);
+
+            date = date.plusDays(1);//하루 증가
+            dayIndex++;
+        }
+
+        tripDayRepository.saveAll(days);
+
     }
 
     // 여행 목록 조회

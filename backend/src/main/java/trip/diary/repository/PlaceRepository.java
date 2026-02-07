@@ -5,6 +5,7 @@ import trip.diary.entity.Place;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface PlaceRepository extends JpaRepository<Place,Long> {
 
@@ -13,4 +14,6 @@ public interface PlaceRepository extends JpaRepository<Place,Long> {
     // 장소 단건 조회
     Optional<Place> findByIdAndTripId(Long id,Long tripId);
 
+    //특정 장소 목록 조회
+    List<Place> findByIdInAndTripId(Set<Long> placeIds, Long tripId);
 }

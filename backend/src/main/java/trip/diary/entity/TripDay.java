@@ -56,6 +56,14 @@ public class TripDay {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    public static TripDay create(Trip trip, LocalDate dayDate, int dayIndex) {
+        TripDay d = new TripDay();
+        d.setTrip(trip);
+        d.setDayDate(dayDate);
+        d.setDayIndex(dayIndex);
+        return d;
+    }
+
     @PrePersist
     void prePersist() {
         LocalDateTime now = LocalDateTime.now();

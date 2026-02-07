@@ -1,4 +1,91 @@
 package trip.diary.controller;
 
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import trip.diary.dto.TimelineDto;
+import trip.diary.service.TimelineService;
+import io.swagger.v3.oas.annotations.Operation;
+
+
+@RestController
+@RequiredArgsConstructor
+@RequestMapping("/trips")
+@Tag(name = "Timeline", description = "여행 일정(타임라인) API")
 public class TripTimelineController {
+    private final TimelineService timelineService;
+
+    @Operation(
+            summary = "여행 타임라인 조회",
+            description = "여행(tripId)에 속한 모든 날짜(day)와 일정(item)을 조회합니다.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "조회 성공",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = TimelineDto.TimelineListResponse.class)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "존재하지 않는 여행"
+                    )
+            }
+    )
+    //GET /trips/{tripId}/timeline
+    @GetMapping("/{tripId}/timeline")
+    public ResponseEntity<TimelineDto.TimelineListResponse> getTimeline(@PathVariable Long tripId){
+        TimelineDto.TimelineListResponse response= timelineService.getTimeline(tripId);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(
+            summary = "일정 추가",
+            description = "특정 날짜(day)에 새로운 일정(타임라인 아이템)을 추가합니다.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "생성 성공",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = TimelineDto.TimelineItemCreateResponse.class)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "요청 값 오류"
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "여행 또는 날짜를 찾을 수 없음"
+                    )
+            }
+    )
+    //POST /trips/{tripId}/timeline
+    @PostMapping("/{tripId}/timeline")
+    public ResponseEntity<TimelineDto.TimelineItemCreateResponse> createTimelineItem(@PathVariable Long tripId, @RequestBody TimelineDto.TimelineItemCreateRequest request){
+        Long timelineItemId=timelineService.addTimelineItem(tripId,request);
+        return ResponseEntity.ok(new TimelineDto.TimelineItemCreateResponse(timelineItemId));
+
+    }
+
+    @Operation(
+            summary = "일정 삭제",
+            description = "타임라인 아이템 ID로 일정을 삭제합니다.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "삭제 성공"),
+                    @ApiResponse(responseCode = "404", description = "일정을 찾을 수 없음")
+            }
+    )
+    //DELETE /timeline/{timelineId}
+    @DeleteMapping("/timeline/{timelineId}")
+    public ResponseEntity<Void> deleteTimelineItem(@PathVariable Long timelineId){
+        timelineService.deleteTimelineItem(timelineId);
+        return ResponseEntity.ok().build();
+    }
 }

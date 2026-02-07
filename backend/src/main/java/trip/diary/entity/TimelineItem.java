@@ -52,4 +52,15 @@ public class TimelineItem {
         this.updatedAt = LocalDateTime.now();
     }
 
+    public static TimelineItem create(TripDay day, LocalTime startTime, LocalTime endTime, Place place) {
+
+        TimelineItem item = new TimelineItem();
+        item.day = day;
+        item.startTime = startTime;
+        item.endTime = endTime;
+        item.place = place; // null 가능(장소 선택 안 한 일정)
+
+        return item;
+    }
+
 }
