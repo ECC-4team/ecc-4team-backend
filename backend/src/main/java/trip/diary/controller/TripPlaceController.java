@@ -2,6 +2,8 @@ package trip.diary.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -15,6 +17,7 @@ import trip.diary.dto.PlaceRequest;
 import trip.diary.dto.PlaceDetailResponse;
 import trip.diary.dto.PlaceListResponse;
 import trip.diary.dto.PlaceResponse;
+import trip.diary.global.exception.ErrorResponse;
 import trip.diary.service.TripPlaceService;
 
 import java.util.List;
@@ -27,10 +30,21 @@ public class TripPlaceController {
 
     private final TripPlaceService tripPlaceService;
 
-    @Operation(summary = "장소 목록 조회", description = "특정 여행의 모든 장소 목록을 조회합니다.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "조회 성공"),
-            @ApiResponse(responseCode = "404", description = "여행을 찾을 수 없음")
+    @Operation(
+            summary = "장소 목록 조회",
+            description = "특정 여행의 모든 장소 목록을 조회합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "조회 성공",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = PlaceListResponse.class)))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "여행을 찾을 수 없음",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            )
     })
     @GetMapping
     public ResponseEntity<List<PlaceListResponse>> getPlaces(
@@ -39,11 +53,23 @@ public class TripPlaceController {
         return ResponseEntity.ok(places);
     }
 
-    @Operation(summary = "장소 상세 조회", description = "특정 장소의 상세 정보를 조회합니다.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "조회 성공"),
-            @ApiResponse(responseCode = "404", description = "여행 또는 장소를 찾을 수 없음")
+    @Operation(
+            summary = "장소 상세 조회",
+            description = "특정 장소의 상세 정보를 조회합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "조회 성공",
+                    content = @Content(schema = @Schema(implementation = PlaceDetailResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "여행 또는 장소를 찾을 수 없음",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            )
     })
+
     @GetMapping("/{placeId}")
     public ResponseEntity<PlaceDetailResponse> getPlace(
             @Parameter(description = "여행 ID", required = true) @PathVariable Long tripId,
@@ -52,12 +78,28 @@ public class TripPlaceController {
         return ResponseEntity.ok(place);
     }
 
-    @Operation(summary = "장소 등록", description = "새로운 장소를 등록합니다. multipart/form-data로 data(JSON)와 images(파일)를 전송합니다.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "등록 성공"),
-            @ApiResponse(responseCode = "400", description = "잘못된 요청"),
-            @ApiResponse(responseCode = "404", description = "여행을 찾을 수 없음")
+    @Operation(
+            summary = "장소 등록",
+            description = "multipart/form-data로 data(JSON) + images(file[])를 받습니다."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "등록 성공",
+                    content = @Content(schema = @Schema(implementation = PlaceResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "잘못된 요청",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "여행을 찾을 수 없음",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            )
     })
+
     @PostMapping(consumes = "multipart/form-data")
     public ResponseEntity<PlaceResponse> createPlace(
             @Parameter(description = "여행 ID", required = true) @PathVariable Long tripId,
@@ -68,11 +110,26 @@ public class TripPlaceController {
                 .body(new PlaceResponse(placeId));
     }
 
-    @Operation(summary = "장소 수정", description = "기존 장소 정보를 수정합니다. multipart/form-data로 data(JSON)와 images(파일)를 전송합니다.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "수정 성공"),
-            @ApiResponse(responseCode = "400", description = "잘못된 요청"),
-            @ApiResponse(responseCode = "404", description = "여행 또는 장소를 찾을 수 없음")
+    @Operation(
+            summary = "장소 수정",
+            description = "multipart/form-data로 data(JSON) + images(file[])를 받습니다."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "수정 성공",
+                    content = @Content(schema = @Schema(implementation = PlaceResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "잘못된 요청",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "여행 또는 장소를 찾을 수 없음",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            )
     })
     @PatchMapping(value = "/{placeId}", consumes = "multipart/form-data")
     public ResponseEntity<PlaceResponse> updatePlace(
@@ -84,10 +141,17 @@ public class TripPlaceController {
         return ResponseEntity.ok(new PlaceResponse(placeId));
     }
 
-    @Operation(summary = "장소 삭제", description = "특정 장소를 삭제합니다.")
-    @ApiResponses(value = {
+    @Operation(
+            summary = "장소 삭제",
+            description = "특정 장소를 삭제합니다."
+    )
+    @ApiResponses({
             @ApiResponse(responseCode = "204", description = "삭제 성공"),
-            @ApiResponse(responseCode = "404", description = "여행 또는 장소를 찾을 수 없음")
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "여행 또는 장소를 찾을 수 없음",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            )
     })
     @DeleteMapping("/{placeId}")
     public ResponseEntity<Void> deletePlace(

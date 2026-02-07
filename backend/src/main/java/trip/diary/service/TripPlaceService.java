@@ -30,6 +30,11 @@ public class TripPlaceService {
 
 
     public List<PlaceListResponse> getPlaces(Long tripId) {
+
+        //여행이 있는지 확인
+        if (!tripRepository.existsById(tripId)) {
+            throw new NotFoundException("trip not found");
+        }
         // 장소 목록 조회
         List<Place> places = placeRepository.findByTripId(tripId);
 
@@ -165,22 +170,35 @@ public class TripPlaceService {
 
 
 
-    private void savePhotos(Place place,List<MultipartFile> images,Integer coverIndex){
-        //올바른 값인지 확인
+    private void savePhotos(Place place, List<MultipartFile> images, Integer coverIndex) {
+        if (images == null || images.isEmpty()) return;
+
+        // 올바른 coverIndex인지 확인
         int cover = (coverIndex == null) ? 0 : coverIndex;
         if (cover < 0 || cover >= images.size()) cover = 0;
 
-        //이미지 각각 저장하기
+        PlacePhoto firstSaved = null;   // 실제 저장된 첫 번째 사진
+        PlacePhoto coverSaved = null;   // 실제 저장된 대표 사진(coverIndex에 해당)
+
         for (int i = 0; i < images.size(); i++) {
             MultipartFile file = images.get(i);
             if (file == null || file.isEmpty()) continue;
 
             String imageUrl = imageStorageService.upload(file);
 
-            Boolean isCover= i==cover;
-            PlacePhoto photo=PlacePhoto.create(place,imageUrl,isCover);
+            boolean isCover = (i == cover);
+            PlacePhoto photo = PlacePhoto.create(place, imageUrl, isCover);
+            PlacePhoto saved = placePhotoRepository.save(photo);
 
-            placePhotoRepository.save(photo);
+            if (firstSaved == null) firstSaved = saved;
+            if (isCover) coverSaved = saved;
+        }
+
+        // 대표가 하나도 저장되지 않았다면(coverIndex 파일이 empty 등) 첫 번째 저장된 사진을 대표로
+        if (firstSaved != null && coverSaved == null) {
+            firstSaved.setIsCover(true);          // 엔티티에 setter(또는 변경 메서드) 필요
+            placePhotoRepository.save(firstSaved); // 안전하게 한 번 더 save
         }
     }
+
 }
