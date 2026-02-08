@@ -1,5 +1,7 @@
 package trip.diary.entity;
 
+import java.util.ArrayList;
+import java.util.List;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -59,6 +61,14 @@ public class Trip {
     @LastModifiedDate
     @Column(name = "updated_at")
     private LocalDateTime updatedAt; // ERD: updated_at
+
+    // 1. 여행 삭제 시 -> 연관된 장소(Place)들도 함께 삭제
+    @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Place> places = new ArrayList<>();
+
+    // 2. 여행 삭제 시 -> 연관된 일정(TripDay)들도 함께 삭제
+    @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<TripDay> tripDays = new ArrayList<>();
 
     @Builder
     public Trip(User user, String title, String destination, Boolean isDomestic, LocalDate startDate, LocalDate endDate, int status, String imageUrl, String description) {
