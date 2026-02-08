@@ -28,7 +28,7 @@ public class TripService {
     public Long createTrip(TripCreateRequest request, String userId) {
         // 현재 로그인한 유저 찾기
         User user = userRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
 
         // 날짜 유효성 검사 (종료일 < 시작일)
         if (request.getEndDate().isBefore(request.getStartDate())) {
@@ -81,11 +81,11 @@ public class TripService {
     public TripDetailDto getTripDetail(Long tripId, String userId) {
         // 유저 확인
         User user = userRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
 
         // 여행 조회 (없으면 에러)
         Trip trip = tripRepository.findById(tripId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 여행입니다."));
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 여행입니다."));
 
         // 권한 확인
         if (!trip.getUser().getUserId().equals(userId)) {
@@ -100,7 +100,7 @@ public class TripService {
     public TripDetailDto updateTrip(Long tripId, TripUpdateRequest request, String userId) {
         // 여행 찾기
         Trip trip = tripRepository.findById(tripId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 여행입니다."));
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 여행입니다."));
 
         // 권한 확인 (내 여행인지)
         if (!trip.getUser().getUserId().equals(userId)) {
@@ -144,7 +144,7 @@ public class TripService {
     public void deleteTrip(Long tripId, String userId) {
         // 1. 여행 찾기
         Trip trip = tripRepository.findById(tripId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 여행입니다."));
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 여행입니다."));
 
         // 2. 권한 확인 (작성자 검증)
         if (!trip.getUser().getUserId().equals(userId)) {
