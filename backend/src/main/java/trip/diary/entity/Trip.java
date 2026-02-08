@@ -34,6 +34,9 @@ public class Trip {
     @Column(nullable = false, length = 100)
     private String destination; // ERD: destination
 
+    @Column(name = "is_domestic")
+    private Boolean isDomestic; // true: 국내, false: 해외
+
     @Column(name = "start_date", nullable = false)
     private LocalDate startDate; // ERD: start_date
 
@@ -58,10 +61,11 @@ public class Trip {
     private LocalDateTime updatedAt; // ERD: updated_at
 
     @Builder
-    public Trip(User user, String title, String destination, LocalDate startDate, LocalDate endDate, int status, String imageUrl, String description) {
+    public Trip(User user, String title, String destination, Boolean isDomestic, LocalDate startDate, LocalDate endDate, int status, String imageUrl, String description) {
         this.user = user;
         this.title = title;
         this.destination = destination;
+        this.isDomestic = isDomestic;
         this.startDate = startDate;
         this.endDate = endDate;
         this.status = status;
@@ -70,10 +74,11 @@ public class Trip {
     }
 
     // 여행 정보 수정 메서드
-    public void update(String title, String destination, LocalDate startDate, LocalDate endDate, String imageUrl, String description) {
+    public void update(String title, String destination, Boolean isDomestic, LocalDate startDate, LocalDate endDate, String imageUrl, String description) {
         // 값이 들어온 경우에만 수정 (null이면 기존 값 유지)
         if (title != null) this.title = title;
         if (destination != null) this.destination = destination;
+        if (isDomestic != null) this.isDomestic = isDomestic;
         if (startDate != null) this.startDate = startDate;
         if (endDate != null) this.endDate = endDate;
         if (imageUrl != null) this.imageUrl = imageUrl;

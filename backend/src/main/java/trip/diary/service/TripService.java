@@ -54,6 +54,7 @@ public class TripService {
                 .user(user)
                 .title(request.getTitle())
                 .destination(request.getDestination())
+                .isDomestic(request.getIsDomestic())
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
                 .status(status)
@@ -127,6 +128,7 @@ public class TripService {
         trip.update(
                 request.getTitle(),
                 request.getDestination(),
+                request.getIsDomestic(),
                 request.getStartDate(),
                 request.getEndDate(),
                 imageUrlToUse,

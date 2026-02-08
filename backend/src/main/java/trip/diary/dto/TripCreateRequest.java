@@ -24,6 +24,9 @@ public class TripCreateRequest {
     @Size(max = 100, message = "여행 장소는 100자 이내여야 합니다.")
     private String destination;
 
+    @Schema(description = "국내/해외 구분(국내이면 true / 해외면 false)", example = "true")
+    private Boolean isDomestic;
+
     @Schema(description = "여행 시작 날짜", example = "2024-07-01")
     @NotNull(message = "시작 날짜를 입력해주세요.")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
