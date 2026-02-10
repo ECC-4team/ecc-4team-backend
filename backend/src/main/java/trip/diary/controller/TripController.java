@@ -92,8 +92,8 @@ public class TripController {
             @ApiResponse(responseCode = "200", description = "조회 성공",
                     content = @Content(schema = @Schema(implementation = TripDto.class))),
 
-            // ▼▼▼ 409 에러: 사용자 정보 충돌 (요청하신 부분) ▼▼▼
-            @ApiResponse(responseCode = "409", description = "서버 상태와 충돌",
+            // ▼▼▼ 404 에러: 사용자 정보 충돌 (요청하신 부분) ▼▼▼
+            @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음",
                     content = @Content(mediaType = "application/json",
                             examples = @ExampleObject(name = "존재하지 않는 사용자",
                                     summary = "토큰은 유효하나 DB에 유저 정보 없음",
@@ -116,7 +116,26 @@ public class TripController {
     @Operation(summary = "여행 상세 조회", description = "특정 여행의 상세 정보를 조회합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "조회 성공"),
-            @ApiResponse(responseCode = "404", description = "해당 여행을 찾을 수 없음")
+            @ApiResponse(responseCode = "400", description = "권한 없음",
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(name = "남의 여행 조회",
+                                    summary = "내 토큰으로 다른 사람의 여행 요청",
+                                    value = """
+                                            {
+                                              "message": "조회 권한이 없습니다."
+                                            }
+                                            """)
+                    )),
+            @ApiResponse(responseCode = "404", description = "여행을 찾을 수 없음",
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(name = "없는 여행 ID",
+                                    summary = "DB에 존재하지 않는 ID 요청",
+                                    value = """
+                                            {
+                                              "message": "존재하지 않는 여행입니다."
+                                            }
+                                            """)
+                    ))
     })
     @GetMapping("/{tripId}")
     public ResponseEntity<CommonResponse<TripDetailDto>> getTripDetail(
@@ -128,7 +147,47 @@ public class TripController {
     }
 
     // 여행 수정
-    @Operation(summary = "여행 수정", description = "여행 정보를 수정합니다.")
+    @Operation(summary = "여행 수정", description = "여행 정보를 수정합니다. (수정할 필드만 보내면 됩니다)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "수정 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청 (권한, 날짜, 유효성)",
+                    content = @Content(mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(name = "1. 권한 없음",
+                                            summary = "남의 여행 수정 시도",
+                                            value = """
+                                                    {
+                                                      "message": "수정 권한이 없습니다."
+                                                    }
+                                                    """),
+                                    @ExampleObject(name = "2. 날짜 오류",
+                                            summary = "종료일 < 시작일",
+                                            value = """
+                                                    {
+                                                      "message": "여행 종료일은 시작일보다 빠를 수 없습니다."
+                                                    }
+                                                    """),
+                                    @ExampleObject(name = "3. 필수값 누락",
+                                            summary = "필수 데이터 누락 (@Valid)",
+                                            value = """
+                                                    {
+                                                      "message": "여행지를 입력해주세요."
+                                                    }
+                                                    """)
+                            })),
+
+            // ▼▼▼ 404 에러: 여행 없음 ▼▼▼
+            @ApiResponse(responseCode = "404", description = "여행을 찾을 수 없음",
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(name = "존재하지 않는 여행 ID",
+                                    summary = "DB에 없는 ID로 수정 요청",
+                                    value = """
+                                            {
+                                              "message": "존재하지 않는 여행입니다."
+                                            }
+                                            """)
+                    ))
+    })
     @PatchMapping("/{tripId}")
     public ResponseEntity<CommonResponse<Void>> updateTrip(
             @Parameter(description = "여행 ID", example = "1") @PathVariable Long tripId,
@@ -140,10 +199,30 @@ public class TripController {
     }
 
     // 여행 삭제
-    @Operation(summary = "여행 삭제", description = "특정 여행을 삭제합니다.")
+    @Operation(summary = "여행 삭제", description = "특정 여행을 삭제합니다. (관련된 장소, 일정도 모두 삭제됩니다)")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "삭제 성공"),
-            @ApiResponse(responseCode = "403", description = "삭제 권한 없음 (본인 여행 아님)")
+            @ApiResponse(responseCode = "400", description = "삭제 권한 없음",
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(name = "남의 여행 삭제",
+                                    summary = "본인 여행이 아닌 경우",
+                                    value = """
+                                            {
+                                              "message": "삭제 권한이 없습니다."
+                                            }
+                                            """)
+                    )),
+
+            @ApiResponse(responseCode = "404", description = "여행을 찾을 수 없음",
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(name = "존재하지 않는 여행 ID",
+                                    summary = "DB에 없는 ID로 삭제 요청",
+                                    value = """
+                                            {
+                                              "message": "존재하지 않는 여행입니다."
+                                            }
+                                            """)
+                    ))
     })
     @DeleteMapping("/{tripId}")
     public ResponseEntity<CommonResponse<Void>> deleteTrip(

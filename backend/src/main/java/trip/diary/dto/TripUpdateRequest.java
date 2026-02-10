@@ -21,6 +21,9 @@ public class TripUpdateRequest {
     // PATCH에서는 값을 안 보낼 수도 있으므로 @NotBlank 삭제 (Null 허용)
     private String destination;
 
+    @Schema(description = "국내/해외 구분(국내이면 true / 해외면 false)", example = "true")
+    private Boolean isDomestic;
+
     @Schema(description = "수정할 시작 날짜", example = "2024-07-02")
     private LocalDate startDate;
 
