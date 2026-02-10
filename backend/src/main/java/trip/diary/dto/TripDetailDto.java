@@ -21,6 +21,9 @@ public class TripDetailDto {
     @Schema(description = "여행지", example = "서울")
     private String destination;
 
+    @Schema(description = "국내/해외 여부 (true: 국내, false: 해외)", example = "true")
+    private Boolean isDomestic;
+
     @Schema(description = "시작 날짜", example = "2024-07-01")
     private LocalDate startDate;
 
@@ -41,6 +44,7 @@ public class TripDetailDto {
                 .tripId(trip.getId())
                 .title(trip.getTitle())
                 .destination(trip.getDestination())
+                .isDomestic(trip.getIsDomestic())
                 .startDate(trip.getStartDate())
                 .endDate(trip.getEndDate())
                 .status(trip.getStatus())
