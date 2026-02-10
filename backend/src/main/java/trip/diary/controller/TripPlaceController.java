@@ -1,5 +1,6 @@
 package trip.diary.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -93,12 +94,18 @@ public class TripPlaceController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<PlaceResponse> createPlace(
             @PathVariable Long tripId,
-            @RequestPart("data") PlaceRequest request,
+            @RequestPart("data") String data,
             @RequestPart(value = "images", required = false) List<MultipartFile> images
-    ) {
+    ) throws Exception {
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        PlaceRequest request = objectMapper.readValue(data, PlaceRequest.class);
+
         Long placeId = tripPlaceService.createPlace(tripId, request, images);
-        return ResponseEntity.status(HttpStatus.CREATED).body(new PlaceResponse(placeId));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new PlaceResponse(placeId));
     }
+
 
     /** Swagger 문서용 multipart 스키마 */
     static class CreatePlaceMultipart {
