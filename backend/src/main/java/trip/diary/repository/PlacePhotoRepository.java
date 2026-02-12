@@ -7,11 +7,11 @@ import java.util.*;
 
 public interface PlacePhotoRepository extends JpaRepository<PlacePhoto,Long> {
 
-    Optional<PlacePhoto> findByPlaceIdAndIsCoverTrue(Long placeId);
+    Optional<PlacePhoto> findByPlace_IdAndIsCoverTrue(Long placeId);
 
-    List<PlacePhoto> findByPlaceId(Long placeId);
+    List<PlacePhoto> findByPlace_Id(Long placeId);
 
-    List<PlacePhoto> findByPlaceIdInAndIsCoverTrue(List<Long> placeIds);
+    List<PlacePhoto> findByPlace_IdInAndIsCoverTrue(List<Long> placeIds);
 
-    void deleteByPlaceId(Long placeId);
+    void deleteByPlace_Id(Long placeId);
 }

@@ -47,7 +47,7 @@ public class TripPlaceService {
                 .toList();
 
         //대표이미지를 조회하고 placeId와 대표이미지를 묶는 맵 생성
-        Map<Long,String> coverMap= placePhotoRepository.findByPlaceIdInAndIsCoverTrue(placeIds).stream()
+        Map<Long,String> coverMap= placePhotoRepository.findByPlace_IdInAndIsCoverTrue(placeIds).stream()
                 .collect(Collectors.toMap(pp->pp.getPlace().getId(), PlacePhoto::getImageUrl,(a, b) -> a));
 
         return places.stream()
@@ -74,12 +74,12 @@ public class TripPlaceService {
 
         //대표 이미지 조회
         String coverImageUrl = placePhotoRepository
-                .findByPlaceIdAndIsCoverTrue(place.getId())
+                .findByPlace_IdAndIsCoverTrue(place.getId())
                 .map(PlacePhoto::getImageUrl)
                 .orElse(null);
 
         //이미지들 조회
-        List<String> imageUrls = placePhotoRepository.findByPlaceId(place.getId())
+        List<String> imageUrls = placePhotoRepository.findByPlace_Id(place.getId())
                 .stream()
                 .map(PlacePhoto::getImageUrl)
                 .toList();
@@ -149,7 +149,7 @@ public class TripPlaceService {
 
         // 이미지가 오면 → 기존 삭제 후 전체 교체
         if (images != null && !images.isEmpty()) {
-            placePhotoRepository.deleteByPlaceId(placeId);
+            placePhotoRepository.deleteByPlace_Id(placeId);
             savePhotos(place, images, request.coverIndex());
         }
 
@@ -162,7 +162,7 @@ public class TripPlaceService {
                 .orElseThrow(() -> new NotFoundException("place not found"));
 
         //사진 삭제
-        placePhotoRepository.deleteByPlaceId(placeId);
+        placePhotoRepository.deleteByPlace_Id(placeId);
         //장소 게시물 삭제
         placeRepository.delete(place);
 

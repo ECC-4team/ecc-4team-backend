@@ -9,9 +9,9 @@ import java.util.Optional;
 
 public interface TripDayRepository extends JpaRepository<TripDay, Long> {
 
-    List<TripDay> findByTripIdOrderByDayDateAsc(Long tripId);
+    List<TripDay> findByTrip_IdOrderByDayDateAsc(Long tripId);
 
-    Optional<TripDay> findByTripIdAndDayDate(Long tripId, LocalDate dayDate);
+    Optional<TripDay> findByTrip_IdAndDayDate(Long tripId, LocalDate dayDate);
 
-    Optional<TripDay> findByTripIdAndDayIndex(Long tripId, Integer dayIndex);
+    Optional<TripDay> findByTrip_IdAndDayIndex(Long tripId, Integer dayIndex);
 }

@@ -32,7 +32,7 @@ public class TimelineService {
                 .orElseThrow(() -> new IllegalArgumentException("trip not found"));
 
         //타임라인들 가져오기
-        List<TripDay> days = tripDayRepository.findByTripIdOrderByDayDateAsc(tripId);
+        List<TripDay> days = tripDayRepository.findByTrip_IdOrderByDayDateAsc(tripId);
         if (days.isEmpty()) {
             return new TimelineDto.TimelineListResponse(List.of());
         }
@@ -40,7 +40,7 @@ public class TimelineService {
         //일정 아이템들 조회
         List<Long> dayIds = days.stream().map(TripDay::getId).toList();
         List<TimelineItem> items = timelineItemRepository
-                .findByDayIdInOrderByDayIdAscStartTimeAsc(dayIds);
+                .findByDay_IdInOrderByDay_IdAscStartTimeAsc(dayIds);
 
         // 각각의 아이템의 placeIds 모으기
         Set<Long> placeIds = items.stream()
@@ -51,7 +51,7 @@ public class TimelineService {
         //placeIds 모은걸로 한꺼번에 조회하기(쿼리 횟수 줄이기위해)
         Map<Long, String> placeNameMap = new HashMap<>();
         if (!placeIds.isEmpty()) {
-            List<Place> places = placeRepository.findByIdInAndTripId(placeIds, tripId);
+            List<Place> places = placeRepository.findByIdInAndTrip_Id(placeIds, tripId);
             placeNameMap = places.stream()
                     .collect(Collectors.toMap(Place::getId, Place::getName, (a, b) -> a));
         }
@@ -112,14 +112,14 @@ public class TimelineService {
                 .orElseThrow(() -> new IllegalArgumentException("trip not found"));
 
         // 사용자가 선택한 day 찾기
-        TripDay day = tripDayRepository.findByTripIdAndDayDate(tripId, request.dayDate())
+        TripDay day = tripDayRepository.findByTrip_IdAndDayDate(tripId, request.dayDate())
                 .orElseThrow(() -> new IllegalArgumentException("day not found"));
 
 
         Place place = null;
         if (request.placeId() != null) {
             // 사용자가 선택한 장소 찾기
-            place = placeRepository.findByIdAndTripId(request.placeId(), tripId)
+            place = placeRepository.findByIdAndTrip_Id(request.placeId(), tripId)
                     .orElseThrow(() -> new IllegalArgumentException("place not found"));
         }
 
