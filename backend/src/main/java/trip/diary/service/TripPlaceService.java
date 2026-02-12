@@ -36,7 +36,7 @@ public class TripPlaceService {
             throw new NotFoundException("trip not found");
         }
         // 장소 목록 조회
-        List<Place> places = placeRepository.findByTripId(tripId);
+        List<Place> places = placeRepository.findByTrip_Id(tripId);
 
         // 장소가 없으면 바로 반환
         if (places.isEmpty()) return List.of();
@@ -68,7 +68,7 @@ public class TripPlaceService {
     public PlaceDetailResponse getPlace(Long tripId, Long placeId) {
 
         //특정 장소 조회
-        Place place = placeRepository.findByIdAndTripId(placeId, tripId)
+        Place place = placeRepository.findByIdAndTrip_Id(placeId, tripId)
                 .orElseThrow(() -> new NotFoundException("place not found"));
 
 
@@ -128,7 +128,7 @@ public class TripPlaceService {
     @Transactional
     public void updatePlace(Long tripId,Long placeId,PlaceRequest request,List<MultipartFile> images){
         //장소 게시물 조회
-        Place place=placeRepository.findByIdAndTripId(placeId,tripId)
+        Place place=placeRepository.findByIdAndTrip_Id(placeId,tripId)
                 .orElseThrow(() -> new NotFoundException("place not found"));
 
 
@@ -158,7 +158,7 @@ public class TripPlaceService {
     @Transactional
     public void deletePlace(Long tripId,Long placeId){
         //장소 게시물 조회
-        Place place= placeRepository.findByIdAndTripId(placeId,tripId)
+        Place place= placeRepository.findByIdAndTrip_Id(placeId,tripId)
                 .orElseThrow(() -> new NotFoundException("place not found"));
 
         //사진 삭제
@@ -184,11 +184,11 @@ public class TripPlaceService {
             MultipartFile file = images.get(i);
             if (file == null || file.isEmpty()) continue;
 
-            String imageUrl = imageStorageService.upload(file);
+            String imageUrl = imageStorageService.upload(file); //스토리지에 올려서 url을 받음
 
             boolean isCover = (i == cover);
-            PlacePhoto photo = PlacePhoto.create(place, imageUrl, isCover);
-            PlacePhoto saved = placePhotoRepository.save(photo);
+            PlacePhoto photo = PlacePhoto.create(place, imageUrl, isCover); // 사진 객체를 만들고
+            PlacePhoto saved = placePhotoRepository.save(photo);// 저장
 
             if (firstSaved == null) firstSaved = saved;
             if (isCover) coverSaved = saved;
