@@ -9,7 +9,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +23,10 @@ import trip.diary.dto.PlaceListResponse;
 import trip.diary.dto.PlaceResponse;
 import trip.diary.global.exception.ErrorResponse;
 import trip.diary.service.TripPlaceService;
+
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
@@ -120,31 +126,33 @@ public class TripPlaceController {
             summary = "장소 수정",
             description = "multipart/form-data로 data(JSON) + images(file[])를 받습니다."
     )
-    @ApiResponses({
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "수정 성공",
-                    content = @Content(schema = @Schema(implementation = PlaceResponse.class))
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "잘못된 요청",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
-            ),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "여행 또는 장소를 찾을 수 없음",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    @RequestBody(
+            required = true,
+            content = @Content(
+                    mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+                    schema = @Schema(implementation = PlaceUpdateMultipart.class)
             )
-    })
-    @PatchMapping(value = "/{placeId}", consumes = "multipart/form-data")
+    )
+    @PatchMapping(value = "/{placeId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<PlaceResponse> updatePlace(
-            @Parameter(description = "여행 ID", required = true) @PathVariable Long tripId,
-            @Parameter(description = "장소 ID", required = true) @PathVariable Long placeId,
-            @Parameter(description = "장소 정보 (JSON)", required = true) @RequestPart("data") PlaceRequest request,
-            @Parameter(description = "장소 이미지 파일 목록") @RequestPart(value = "images", required = false) List<MultipartFile> images) {
+            @PathVariable Long tripId,
+            @PathVariable Long placeId,
+            @RequestPart("data") PlaceRequest request,
+            @RequestPart(value = "images", required = false) List<MultipartFile> images
+    ) {
         tripPlaceService.updatePlace(tripId, placeId, request, images);
         return ResponseEntity.ok(new PlaceResponse(placeId));
+    }
+
+    /** Swagger용 multipart wrapper */
+    @Getter
+    @Setter
+    public static class PlaceUpdateMultipart {
+        @Schema(description = "장소 정보(JSON)", implementation = PlaceRequest.class, requiredMode = Schema.RequiredMode.REQUIRED)
+        private PlaceRequest data;
+
+        @Schema(description = "장소 이미지 파일 목록", type = "string", format = "binary", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+        private List<MultipartFile> images;
     }
 
     @Operation(
