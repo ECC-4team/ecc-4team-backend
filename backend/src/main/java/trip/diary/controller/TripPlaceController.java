@@ -25,12 +25,8 @@ import trip.diary.dto.PlaceResponse;
 import trip.diary.global.exception.ErrorResponse;
 import trip.diary.service.TripPlaceService;
 
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-
-import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Tag(name = "여행 장소", description = "여행별 장소 CRUD API")
 @RestController
@@ -39,6 +35,13 @@ import java.util.List;
 public class TripPlaceController {
 
     private final TripPlaceService tripPlaceService;
+
+    /**
+     * multipart에서 JSON 파트("data")는 클라이언트/도구(Swagger UI, Postman, 브라우저)에 따라
+     * Content-Type이 text/plain으로 들어오는 경우가 많아 DTO로 직접 바인딩이 깨질 수 있습니다.
+     * 그래서 data는 String으로 받고, 서버에서 JSON 파싱하는 방식으로 안정성을 확보합니다.
+     */
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @Operation(
             summary = "장소 목록 조회",
@@ -106,9 +109,12 @@ public class TripPlaceController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<PlaceResponse> createPlace(
             @PathVariable Long tripId,
-            @RequestPart("data") PlaceRequest request,
+            @RequestPart("data") String data,
             @RequestPart(value = "images", required = false) List<MultipartFile> images
-    ) {
+    ) throws JsonProcessingException {
+
+        PlaceRequest request = OBJECT_MAPPER.readValue(data, PlaceRequest.class);
+
         Long placeId = tripPlaceService.createPlace(tripId, request, images);
 
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -142,15 +148,18 @@ public class TripPlaceController {
     public ResponseEntity<PlaceResponse> updatePlace(
             @PathVariable Long tripId,
             @PathVariable Long placeId,
-            @RequestPart("data") PlaceRequest request,
+            @RequestPart("data") String data,
             @RequestPart(value = "images", required = false) List<MultipartFile> images
-    ) {
+    ) throws JsonProcessingException {
+
+        PlaceRequest request = OBJECT_MAPPER.readValue(data, PlaceRequest.class);
+
         // null/empty 필터링 (스웨거에서 빈 파일 들어오는 경우 방어)
         List<MultipartFile> imageList = null;
         if (images != null) {
             imageList = images.stream()
                     .filter(f -> f != null && !f.isEmpty())
-                    .toList();
+                    .collect(Collectors.toList());
         }
 
         tripPlaceService.updatePlace(tripId, placeId, request, imageList);
