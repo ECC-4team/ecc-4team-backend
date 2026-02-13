@@ -99,7 +99,7 @@ public class TripPlaceController {
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
                     content = @Content(
-                            mediaType = "multipart/form-data",
+                            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
                             schema = @Schema(implementation = CreatePlaceMultipart.class)
                     )
             )
@@ -107,25 +107,22 @@ public class TripPlaceController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<PlaceResponse> createPlace(
             @PathVariable Long tripId,
-            @RequestPart("data") String data,
+            @RequestPart("data") PlaceRequest request,
             @RequestPart(value = "images", required = false) List<MultipartFile> images
-    ) throws Exception {
-
-        PlaceRequest request = objectMapper.readValue(data, PlaceRequest.class);
-
+    ) {
         Long placeId = tripPlaceService.createPlace(tripId, request, images);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new PlaceResponse(placeId));
     }
 
-
     /** Swagger 문서용 multipart 스키마 */
-    static class CreatePlaceMultipart {
+    public static class CreatePlaceMultipart {
         @Schema(description = "장소 정보(JSON)", requiredMode = Schema.RequiredMode.REQUIRED)
         public PlaceRequest data;
 
-        @Schema(description = "장소 이미지 파일 목록", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+        @Schema(description = "장소 이미지 파일 목록", type = "string", format = "binary",
+                requiredMode = Schema.RequiredMode.NOT_REQUIRED)
         public List<MultipartFile> images;
     }
 
@@ -133,30 +130,27 @@ public class TripPlaceController {
 
     @Operation(
             summary = "장소 수정",
-            description = "multipart/form-data로 data(JSON) + images(file[])를 받습니다."
-    )
-    @RequestBody(
-            required = true,
-            content = @Content(
-                    mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
-                    schema = @Schema(implementation = PlaceUpdateMultipart.class)
+            description = "multipart/form-data로 data(JSON) + images(file[])를 받습니다.",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    content = @Content(
+                            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+                            schema = @Schema(implementation = PlaceUpdateMultipart.class)
+                    )
             )
     )
     @PatchMapping(value = "/{placeId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<PlaceResponse> updatePlace(
             @PathVariable Long tripId,
             @PathVariable Long placeId,
-            @RequestPart("data") String data,
-            @RequestPart(value = "images", required = false) MultipartFile[] images
-    ) throws JsonProcessingException {
-
-        PlaceRequest request = objectMapper.readValue(data, PlaceRequest.class);
-
+            @RequestPart("data") PlaceRequest request,
+            @RequestPart(value = "images", required = false) List<MultipartFile> images
+    ) {
+        // null/empty 필터링 (스웨거에서 빈 파일 들어오는 경우 방어)
         List<MultipartFile> imageList = null;
-
         if (images != null) {
-            imageList = Arrays.stream(images)
-                    .filter(file -> file != null && !file.isEmpty())
+            imageList = images.stream()
+                    .filter(f -> f != null && !f.isEmpty())
                     .toList();
         }
 
@@ -164,15 +158,15 @@ public class TripPlaceController {
         return ResponseEntity.ok(new PlaceResponse(placeId));
     }
 
-
     /** Swagger용 multipart wrapper */
     @Getter
     @Setter
     public static class PlaceUpdateMultipart {
-        @Schema(description = "장소 정보(JSON)", implementation = PlaceRequest.class, requiredMode = Schema.RequiredMode.REQUIRED)
+        @Schema(description = "장소 정보(JSON)", requiredMode = Schema.RequiredMode.REQUIRED)
         private PlaceRequest data;
 
-        @Schema(description = "장소 이미지 파일 목록", type = "string", format = "binary", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+        @Schema(description = "장소 이미지 파일 목록", type = "string", format = "binary",
+                requiredMode = Schema.RequiredMode.NOT_REQUIRED)
         private List<MultipartFile> images;
     }
 
