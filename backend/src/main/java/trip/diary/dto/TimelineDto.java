@@ -35,8 +35,15 @@ public class TimelineDto {
     // GET 응답: 아이템
     public record TimelineItemResponse(
             Long timelineId,
+
+            @Schema(description = "시작 시간 (HH:mm)", example = "09:00", type = "string", format = "time")
+            @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm")
             LocalTime startTime,
+
+            @Schema(description = "종료 시간 (HH:mm)", example = "10:30", type = "string", format = "time")
+            @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm")
             LocalTime endTime,
+
             Long placeId,
             String placeName
     ) {}
@@ -44,6 +51,8 @@ public class TimelineDto {
     // GET 응답: day 묶음
     public record TripDayTimelineResponse(
             Long dayId,
+            @Schema(description = "일자 (yyyy-MM-dd)", example = "2026-02-13", type = "string", format = "date")
+            @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
             LocalDate dayDate,
             Integer dayIndex,
             String themeTitle,
