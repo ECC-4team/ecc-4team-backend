@@ -1,5 +1,6 @@
 package trip.diary.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -28,6 +29,7 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Tag(name = "여행 장소", description = "여행별 장소 CRUD API")
@@ -37,6 +39,7 @@ import java.util.List;
 public class TripPlaceController {
 
     private final TripPlaceService tripPlaceService;
+    private final ObjectMapper objectMapper;
 
     @Operation(
             summary = "장소 목록 조회",
@@ -60,6 +63,8 @@ public class TripPlaceController {
         List<PlaceListResponse> places = tripPlaceService.getPlaces(tripId);
         return ResponseEntity.ok(places);
     }
+
+    /*-----------------------------------------------------------------------------------------------*/
 
     @Operation(
             summary = "장소 상세 조회",
@@ -86,6 +91,8 @@ public class TripPlaceController {
         return ResponseEntity.ok(place);
     }
 
+    /*-----------------------------------------------------------------------------------------------*/
+
     @Operation(
             summary = "장소 등록",
             description = "multipart/form-data로 data(JSON) + images(file[])를 받습니다.",
@@ -104,10 +111,10 @@ public class TripPlaceController {
             @RequestPart(value = "images", required = false) List<MultipartFile> images
     ) throws Exception {
 
-        ObjectMapper objectMapper = new ObjectMapper();
         PlaceRequest request = objectMapper.readValue(data, PlaceRequest.class);
 
         Long placeId = tripPlaceService.createPlace(tripId, request, images);
+
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new PlaceResponse(placeId));
     }
@@ -121,6 +128,8 @@ public class TripPlaceController {
         @Schema(description = "장소 이미지 파일 목록", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
         public List<MultipartFile> images;
     }
+
+    /*-----------------------------------------------------------------------------------------------*/
 
     @Operation(
             summary = "장소 수정",
@@ -137,12 +146,24 @@ public class TripPlaceController {
     public ResponseEntity<PlaceResponse> updatePlace(
             @PathVariable Long tripId,
             @PathVariable Long placeId,
-            @RequestPart("data") PlaceRequest request,
-            @RequestPart(value = "images", required = false) List<MultipartFile> images
-    ) {
-        tripPlaceService.updatePlace(tripId, placeId, request, images);
+            @RequestPart("data") String data,
+            @RequestPart(value = "images", required = false) MultipartFile[] images
+    ) throws JsonProcessingException {
+
+        PlaceRequest request = objectMapper.readValue(data, PlaceRequest.class);
+
+        List<MultipartFile> imageList = null;
+
+        if (images != null) {
+            imageList = Arrays.stream(images)
+                    .filter(file -> file != null && !file.isEmpty())
+                    .toList();
+        }
+
+        tripPlaceService.updatePlace(tripId, placeId, request, imageList);
         return ResponseEntity.ok(new PlaceResponse(placeId));
     }
+
 
     /** Swagger용 multipart wrapper */
     @Getter
@@ -154,6 +175,8 @@ public class TripPlaceController {
         @Schema(description = "장소 이미지 파일 목록", type = "string", format = "binary", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
         private List<MultipartFile> images;
     }
+
+    /*-----------------------------------------------------------------------------------------------*/
 
     @Operation(
             summary = "장소 삭제",

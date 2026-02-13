@@ -147,11 +147,15 @@ public class TripPlaceService {
             place.setCategory(request.category());
         }
 
-        // 이미지가 오면 → 기존 삭제 후 전체 교체
-        if (images != null && !images.isEmpty()) {
+        if (images != null) {
+            // 이미지 관련 요청이 온 것
             placePhotoRepository.deleteByPlace_Id(placeId);
-            savePhotos(place, images, request.coverIndex());
+
+            if (!images.isEmpty()) {
+                savePhotos(place, images, request.coverIndex());
+            }
         }
+
 
     }
 
