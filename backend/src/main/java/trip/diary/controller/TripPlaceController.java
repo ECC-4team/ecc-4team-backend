@@ -39,7 +39,6 @@ import java.util.List;
 public class TripPlaceController {
 
     private final TripPlaceService tripPlaceService;
-    private final ObjectMapper objectMapper;
 
     @Operation(
             summary = "장소 목록 조회",
