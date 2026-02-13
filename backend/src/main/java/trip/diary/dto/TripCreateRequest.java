@@ -37,8 +37,8 @@ public class TripCreateRequest {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate endDate;
 
-    @Schema(description = "여행 이미지 (선택)", example = "https://i.imgur.com/bM8yb4v.jpeg")
-    private String imageUrl;
+    //@Schema(description = "여행 이미지 (선택)", example = "https://i.imgur.com/bM8yb4v.jpeg")
+    //private String imageUrl;
 
     @Schema(description = "여행 설명 (선택)", example = "친구들과 함께 가는 여름 휴가!")
     private String description;

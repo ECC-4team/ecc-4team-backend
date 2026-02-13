@@ -11,11 +11,12 @@ import trip.diary.global.exception.NotFoundException;
 import trip.diary.repository.TripDayRepository;
 import trip.diary.repository.TripRepository;
 import trip.diary.repository.UserRepository;
-
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.springframework.web.multipart.MultipartFile;
+import trip.diary.global.image.ImageStorageService;
 
 @Service
 @Transactional
@@ -25,12 +26,12 @@ public class TripService {
     private final TripRepository tripRepository;
     private final UserRepository userRepository;
     private final TripDayRepository tripDayRepository;
-
+    private final ImageStorageService imageStorageService;
 
     private static final String DEFAULT_IMAGE_URL = "https://i.imgur.com/bM8yb4v.jpeg";
 
     // 여행 생성
-    public Long createTrip(TripCreateRequest request, String userId) {
+    public Long createTrip(TripCreateRequest request, MultipartFile image, String userId) {
         // 현재 로그인한 유저 찾기
         User user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
@@ -40,19 +41,16 @@ public class TripService {
             throw new IllegalArgumentException("여행 종료일은 시작일보다 빠를 수 없습니다.");
         }
 
+        // 이미지 처리 로직
+        String imageUrl = DEFAULT_IMAGE_URL;
+        if (image != null && !image.isEmpty()) {
+            // 파일을 서버에 저장하고 경로를 받아옴
+            imageUrl = imageStorageService.upload(image);
+        }
+
         // 여행 상태(Status) 판별
         // 오늘 날짜가 종료일보다 지났으면 1(다녀온 여행), 아니면 2(새로운/진행중 여행)
         int status = LocalDate.now().isAfter(request.getEndDate()) ? 1 : 2;
-
-        // 이미지 설정
-        String imageUrl;
-        if (request.getImageUrl() != null && !request.getImageUrl().isBlank()) {
-            // 사용자가 보낸 이미지
-            imageUrl = request.getImageUrl();
-        } else {
-            // 없으면 기본 이미지 사용
-            imageUrl = DEFAULT_IMAGE_URL;
-        }
 
         // Trip 엔티티 생성
         Trip trip = Trip.builder()

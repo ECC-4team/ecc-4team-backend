@@ -17,9 +17,12 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import trip.diary.dto.*;
 import trip.diary.service.TripService;
-
+import org.springframework.http.MediaType;
+import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.Map;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Tag(name = "여행 메인 홈 API", description = "여행 생성, 목록 조회, 상세 조회, 수정, 삭제")
 @RestController
@@ -27,6 +30,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class TripController {
 
+    private final ObjectMapper objectMapper;
     private final TripService tripService;
 
     // 여행 생성
@@ -74,16 +78,31 @@ public class TripController {
                                             """)
                     ))
     })
-    @PostMapping
-    public ResponseEntity<CommonResponse<Map<String, Long>>> createTrip(
-            @RequestBody @Valid TripCreateRequest request,
-            @Parameter(hidden = true) @AuthenticationPrincipal UserDetails userDetails
-    ) {
-        Long tripId = tripService.createTrip(request, userDetails.getUsername());
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<CommonResponse<Long>> createTrip(
+            // [핵심 변경] 객체가 아니라 String으로 받습니다.
+            // 이렇게 하면 헤더가 octet-stream이든 text든 무조건 받아집니다.
+            @Parameter(description = "여행 정보 JSON (String)", required = true)
+            @RequestPart("data") String data,
 
-        // { success: true, data: { "tripId": 1 } }
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(CommonResponse.success(Map.of("tripId", tripId)));
+            @Parameter(description = "대표 이미지 파일", required = false)
+            @RequestPart(value = "image", required = false) MultipartFile image,
+
+            @Parameter(hidden = true) @AuthenticationPrincipal UserDetails userDetails) throws JsonProcessingException {
+
+        // 1. String -> 객체 변환 (수동 파싱)
+        TripCreateRequest request = objectMapper.readValue(data, TripCreateRequest.class);
+
+        // 2. 유효성 검사 (@Valid가 동작하지 않으므로 수동 검사 필요, 혹은 Service에서 처리)
+        // (간단하게 필수값인 destination 체크 예시)
+        if (request.getDestination() == null || request.getDestination().isBlank()) {
+            throw new IllegalArgumentException("여행 장소를 입력해주세요.");
+        }
+
+        // 3. 서비스 호출
+        Long tripId = tripService.createTrip(request, image, userDetails.getUsername());
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(CommonResponse.success(tripId));
     }
 
     // 여행 목록 조회
