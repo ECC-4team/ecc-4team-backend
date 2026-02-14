@@ -178,14 +178,7 @@ public class TripController {
                                                       "message": "수정 권한이 없습니다."
                                                     }
                                                     """),
-                                    @ExampleObject(name = "2. 날짜 오류",
-                                            summary = "종료일 < 시작일",
-                                            value = """
-                                                    {
-                                                      "message": "여행 종료일은 시작일보다 빠를 수 없습니다."
-                                                    }
-                                                    """),
-                                    @ExampleObject(name = "3. 필수값 누락",
+                                    @ExampleObject(name = "2. 필수값 누락",
                                             summary = "필수 데이터 누락 (@Valid)",
                                             value = """
                                                     {
