@@ -126,7 +126,7 @@ public class TripService {
 
     // 여행 수정
     @Transactional
-    public TripDetailDto updateTrip(Long tripId, TripUpdateRequest request, String userId) {
+    public TripDetailDto updateTrip(Long tripId, TripUpdateRequest request, MultipartFile image, String userId) {
         // 여행 찾기
         Trip trip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 여행입니다."));
@@ -136,12 +136,12 @@ public class TripService {
             throw new IllegalArgumentException("수정 권한이 없습니다.");
         }
 
-        // 이미지 처리 (Null일 경우 기본값)
-        // 값을 안 보낸 경우에는 수정X
-        // 값을 빈 문자열("")로 보낸 경우 기본 이미지로 초기화
-        String imageUrlToUse = request.getImageUrl();
-        if (imageUrlToUse != null && imageUrlToUse.isBlank()) {
-            imageUrlToUse = DEFAULT_IMAGE_URL;
+        // 이미지 처리 로직
+        String imageUrlToUse = trip.getImageUrl(); // 기본적으로 기존 이미지 유지
+
+        if (image != null && !image.isEmpty()) {
+            // 새 파일이 들어왔으면 Cloudinary 업로드 후 URL 교체
+            imageUrlToUse = imageStorageService.upload(image);
         }
 
         // 날짜 유효성 검사
