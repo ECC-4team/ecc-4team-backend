@@ -117,7 +117,7 @@ public class TripPlaceService {
         Place savedPlace= placeRepository.save(place);
 
         //이미지가 있다면 저장
-        if (images != null) {
+        if (images != null && !images.isEmpty()) {
             savePhotos(savedPlace, images, request.coverIndex());
         }
 

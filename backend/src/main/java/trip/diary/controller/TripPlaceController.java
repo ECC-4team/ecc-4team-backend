@@ -36,11 +36,7 @@ public class TripPlaceController {
 
     private final TripPlaceService tripPlaceService;
 
-    /**
-     * multipart에서 JSON 파트("data")는 클라이언트/도구(Swagger UI, Postman, 브라우저)에 따라
-     * Content-Type이 text/plain으로 들어오는 경우가 많아 DTO로 직접 바인딩이 깨질 수 있습니다.
-     * 그래서 data는 String으로 받고, 서버에서 JSON 파싱하는 방식으로 안정성을 확보합니다.
-     */
+
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @Operation(
