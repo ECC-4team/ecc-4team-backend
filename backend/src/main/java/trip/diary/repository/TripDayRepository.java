@@ -13,5 +13,5 @@ public interface TripDayRepository extends JpaRepository<TripDay, Long> {
 
     Optional<TripDay> findByTrip_IdAndDayDate(Long tripId, LocalDate dayDate);
 
-    Optional<TripDay> findByTrip_IdAndDayIndex(Long tripId, Integer dayIndex);
+    List<TripDay> findAllByTrip_IdAndIdIn(Long tripId, List<Long> ids);
 }

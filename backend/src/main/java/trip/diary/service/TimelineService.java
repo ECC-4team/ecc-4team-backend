@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import trip.diary.dto.TimelineDto;
+import trip.diary.dto.TripDayBulkUpdateRequest;
 import trip.diary.entity.Place;
 import trip.diary.entity.TimelineItem;
 import trip.diary.entity.Trip;
@@ -15,10 +16,13 @@ import trip.diary.repository.TripRepository;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.function.Function;
+
 
 @Service
 @RequiredArgsConstructor
 public class TimelineService {
+
     private final TripRepository tripRepository;
     private final TripDayRepository tripDayRepository;
     private final TimelineItemRepository timelineItemRepository;
@@ -136,6 +140,51 @@ public class TimelineService {
                 .orElseThrow(() -> new IllegalArgumentException("timeline item not found"));
 
         timelineItemRepository.delete(item);
+    }
+
+
+    @Transactional
+    public void updateTripDays(Long tripId, TripDayBulkUpdateRequest req){
+
+        //제대로 값이 들어왔는지 확인
+        if (req == null || req.getDays() == null || req.getDays().isEmpty()) {
+            throw new IllegalArgumentException("days is required");
+        }
+
+        //null이 아닌 dayId들 리스트 생성
+        List<Long> dayIds = req.getDays().stream()
+                .map(TripDayBulkUpdateRequest.TripDayUpdateItem::getDayId)
+                .filter(Objects::nonNull)
+                .toList();
+
+        //모든 day가 다 들어왔는지 확인
+        if (dayIds.size() != req.getDays().size()) {
+            throw new IllegalArgumentException("dayId is required for all items");
+        }
+
+        //TripDay 리포지토리 조회
+        List<TripDay> found = tripDayRepository.findAllByTrip_IdAndIdIn(tripId, dayIds);
+
+        //id랑 찾은 TripDay를 묶은 map 만들기
+        Map<Long, TripDay> map = found.stream()
+                .collect(Collectors.toMap(TripDay::getId, Function.identity()));
+
+
+        for (TripDayBulkUpdateRequest.TripDayUpdateItem item : req.getDays()) {
+
+            TripDay day = map.get(item.getDayId());
+
+            //디비에 존재하는건지 확인
+            if (day == null) {
+                throw new NoSuchElementException("TripDay not found: " + item.getDayId());
+            }
+
+            //수정하기-> 알아서 저장됨(dirty checking)
+            day.setThemeTitle(item.getThemeTitle());
+            day.setDayNote(item.getDayNote());
+            day.setBudgetPlanned(item.getBudgetPlanned());
+            day.setBudgetSpent(item.getBudgetSpent());
+        }
     }
 
 }

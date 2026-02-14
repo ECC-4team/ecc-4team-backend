@@ -86,8 +86,8 @@ public class TripService {
             TripDay day = TripDay.create(trip, date, dayIndex);
             days.add(day);
 
-            date = date.plusDays(1);//하루 증가
-            dayIndex++;
+            date = date.plusDays(1);//날짜 하루 증가
+            dayIndex++;//인덱스 하나 증가
         }
 
         tripDayRepository.saveAll(days);
