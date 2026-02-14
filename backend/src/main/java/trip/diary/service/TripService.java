@@ -144,22 +144,19 @@ public class TripService {
             imageUrlToUse = imageStorageService.upload(image);
         }
 
-        // 날짜 유효성 검사
-        // 요청에 날짜가 있으면 그걸 쓰고, 없으면(null) 기존 DB에 있는 날짜를 가져와서 비교
+        /* 날짜 유효성 검사 로직
         LocalDate startDateToCheck = (request.getStartDate() != null) ? request.getStartDate() : trip.getStartDate();
         LocalDate endDateToCheck = (request.getEndDate() != null) ? request.getEndDate() : trip.getEndDate();
 
         if (endDateToCheck.isBefore(startDateToCheck)) {
             throw new IllegalArgumentException("여행 종료일은 시작일보다 빠를 수 없습니다.");
-        }
+        } */
 
         // 내용 수정 (Entity의 update 메서드 호출)
         trip.update(
                 request.getTitle(),
                 request.getDestination(),
                 request.getIsDomestic(),
-                request.getStartDate(),
-                request.getEndDate(),
                 imageUrlToUse,
                 request.getDescription()
         );
