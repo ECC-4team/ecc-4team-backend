@@ -17,6 +17,7 @@ import trip.diary.repository.TripRepository;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.function.Function;
+import java.time.LocalTime;
 
 
 @Service
@@ -103,22 +104,32 @@ public class TimelineService {
     //아이템 추가
     @Transactional
     public Long addTimelineItem(Long tripId, TimelineDto.TimelineItemCreateRequest request){
+
         //예외 처리
         if (request == null) throw new IllegalArgumentException("요청이 비어있습니다");
         if (request.dayDate() == null) throw new IllegalArgumentException("dayDate는 필수입니다");
-        if (request.startTime() == null || request.endTime() == null)
+
+        LocalTime start = request.startTime();
+        LocalTime end = request.endTime();
+
+        if (start == null || end == null)
             throw new IllegalArgumentException("startTime/endTime은 필수입니다");
-        if (!request.startTime().isBefore(request.endTime()))
+        if (!start.isBefore(end))
             throw new IllegalArgumentException("startTime은 endTime보다 빨라야 합니다");
 
-        // trip 존재 체크
-        Trip trip = tripRepository.findById(tripId)
-                .orElseThrow(() -> new IllegalArgumentException("trip not found"));
 
         // 사용자가 선택한 day 찾기
         TripDay day = tripDayRepository.findByTrip_IdAndDayDate(tripId, request.dayDate())
                 .orElseThrow(() -> new IllegalArgumentException("day not found"));
 
+
+        // 겹침 체크 (같은 day 안에서의)
+        boolean overlapped = timelineItemRepository
+                .existsByDay_IdAndStartTimeLessThanAndEndTimeGreaterThan(day.getId(), end, start);
+
+        if (overlapped) {
+            throw new IllegalArgumentException("이미 해당 시간대에 일정이 존재합니다");
+        }
 
         Place place = null;
         if (request.placeId() != null) {
@@ -127,6 +138,7 @@ public class TimelineService {
                     .orElseThrow(() -> new IllegalArgumentException("place not found"));
         }
 
+        //저장
         TimelineItem item = TimelineItem.create(day, request.startTime(), request.endTime(), place);
         TimelineItem saved = timelineItemRepository.save(item);
 
