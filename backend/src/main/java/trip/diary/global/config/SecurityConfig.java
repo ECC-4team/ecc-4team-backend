@@ -3,6 +3,7 @@ package trip.diary.global.config;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -37,8 +38,10 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/css/**", "/js/**", "/users/**", "/h2-console/**", "/v3/api-docs/**","/swagger-ui/**", "/swagger-ui.html").permitAll()
-                        .anyRequest().authenticated() // 나머지는 로그인해야 접근 가능
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // options 인증 요구 허용
+                        .requestMatchers("/css/**", "/js/**", "/users/**", "/h2-console/**",
+                                "/v3/api-docs/**","/swagger-ui/**", "/swagger-ui.html").permitAll()
+                        .anyRequest().authenticated()
                 )
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class)
                 .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable())); // H2 콘솔 깨짐 방지
