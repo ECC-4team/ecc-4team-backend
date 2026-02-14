@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import trip.diary.dto.TimelineDto;
+import trip.diary.dto.TimelineItemUpdateRequest;
 import trip.diary.dto.TripDayBulkUpdateRequest;
 import trip.diary.global.exception.ErrorResponse;
 import trip.diary.service.TimelineService;
@@ -122,6 +123,34 @@ public class TripTimelineController {
     @PutMapping("/{tripId}/days")
     public ResponseEntity<Void> updateTripDays(@PathVariable Long tripId, @RequestBody TripDayBulkUpdateRequest request){
         timelineService.updateTripDays(tripId,request);
+        return ResponseEntity.noContent().build();//204
+    }
+
+    /*-----------------------------------------------------------------------------------*/
+
+    @Operation(
+            summary = "타임라인 아이템 수정",
+            description = """
+                    특정 여행(tripId)의 타임라인 아이템(timelineId)을 수정합니다.
+                    - 시간은 30분 단위(00/30)만 허용
+                    - 같은 날짜(TripDay) 내에서 시간이 겹치면 409 반환
+                    - 끝시간=다음 일정 시작시간은 허용(겹침 아님)
+                    """
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "수정 성공 (No Content)"),
+            @ApiResponse(responseCode = "400", description = "요청값 검증 실패 (시간 형식/30분 단위/시작>=끝 등)",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "대상 리소스 없음 (trip/day/timeline/place not found)",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "409", description = "시간 겹침으로 수정 불가",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+
+    //PUT /trips/{tripId}/timeline/{timelineId}
+    @PutMapping("/{tripId}/timeline/{timelineId}")
+    public ResponseEntity<Void> updateTimelineItem(@PathVariable Long tripId, @PathVariable Long timelineId, @RequestBody TimelineItemUpdateRequest request){
+        timelineService.updateTimelineItem(tripId,timelineId,request);
         return ResponseEntity.noContent().build();//204
     }
 }

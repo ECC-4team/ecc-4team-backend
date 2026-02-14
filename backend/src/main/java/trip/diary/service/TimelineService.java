@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import trip.diary.dto.TimelineDto;
+import trip.diary.dto.TimelineItemUpdateRequest;
 import trip.diary.dto.TripDayBulkUpdateRequest;
 import trip.diary.entity.Place;
 import trip.diary.entity.TimelineItem;
@@ -197,6 +198,51 @@ public class TimelineService {
             day.setBudgetPlanned(item.getBudgetPlanned());
             day.setBudgetSpent(item.getBudgetSpent());
         }
+    }
+
+    @Transactional
+    public void updateTimelineItem(Long timelineId, Long tripId, TimelineItemUpdateRequest request){
+        if (request.dayDate()== null) throw new IllegalArgumentException("dayDate는 필수입니다");
+        if (request.startTime() == null || request.endTime() == null) throw new IllegalArgumentException("startTime/endTime은 필수입니다");
+        if (!request.startTime().isBefore(request.endTime())) {
+            throw new IllegalArgumentException("startTime은 endTime보다 빨라야 합니다");
+        }
+
+        // 수정 대상 item 조회
+        TimelineItem item = timelineItemRepository.findById(timelineId)
+                .orElseThrow(() -> new IllegalArgumentException("timeline item not found"));
+
+        // 소속 검증: timelineId가 이 trip의 일정이 맞는지
+        Long itemTripId = item.getDay().getTrip().getId();
+        if (!itemTripId.equals(tripId)) {
+            throw new IllegalArgumentException("trip mismatch");
+        }
+
+        // target day 조회 (날짜 이동 허용)
+        TripDay targetDay = tripDayRepository.findByTrip_IdAndDayDate(tripId, request.dayDate())
+                .orElseThrow(() -> new IllegalArgumentException("day not found"));
+
+        // 겹침 체크 (자기 자신 제외)
+        boolean overlapped = timelineItemRepository
+                .existsByDay_IdAndIdNotAndStartTimeLessThanAndEndTimeGreaterThan(
+                        targetDay.getId(), timelineId, request.endTime(), request.startTime()
+                );
+        if (overlapped) {
+            throw new IllegalArgumentException("이미 해당 시간대에 일정이 존재합니다");
+        }
+
+        //장소 존재하는지 확인하고 가져오기
+        Place place = null;
+        if (request.placeId() != null) {
+            place = placeRepository.findByIdAndTrip_Id(request.placeId(), tripId)
+                    .orElseThrow(() -> new IllegalArgumentException("place not found"));
+        }
+
+        // 반영-> 저장 안해도 됨(dirty checking)
+        item.setDay(targetDay);
+        item.setStartTime(request.startTime());
+        item.setEndTime(request.endTime());
+        item.setPlace(place);
     }
 
 }

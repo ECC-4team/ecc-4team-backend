@@ -18,4 +18,12 @@ public interface TimelineItemRepository extends JpaRepository<TimelineItem,Long>
             LocalTime newEnd,
             LocalTime newStart
     );
+
+    //자신을 제외하고 시간 겹치는지 확인
+    boolean existsByDay_IdAndIdNotAndStartTimeLessThanAndEndTimeGreaterThan(
+            Long dayId,
+            Long excludeTimelineItemId,
+            LocalTime newEnd,
+            LocalTime newStart
+    );
 }
