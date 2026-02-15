@@ -27,6 +27,7 @@ public class TripService {
     private final UserRepository userRepository;
     private final TripDayRepository tripDayRepository;
     private final ImageStorageService imageStorageService;
+    private final TripAuthorizationService tripAuthorizationService;
 
     private static final String DEFAULT_IMAGE_URL = "https://i.imgur.com/bM8yb4v.jpeg";
 
@@ -108,18 +109,7 @@ public class TripService {
     // 여행 상세 조회
     @Transactional(readOnly = true)
     public TripDetailDto getTripDetail(Long tripId, String userId) {
-        // 유저 확인
-        User user = userRepository.findByUserId(userId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
-
-        // 여행 조회 (없으면 에러)
-        Trip trip = tripRepository.findById(tripId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 여행입니다."));
-
-        // 권한 확인
-        if (!trip.getUser().getUserId().equals(userId)) {
-            throw new IllegalArgumentException("조회 권한이 없습니다.");
-        }
+        Trip trip = tripAuthorizationService.getAuthorizedTrip(tripId, userId);
 
         return TripDetailDto.from(trip);
     }
@@ -127,14 +117,7 @@ public class TripService {
     // 여행 수정
     @Transactional
     public TripDetailDto updateTrip(Long tripId, TripUpdateRequest request, MultipartFile image, String userId) {
-        // 여행 찾기
-        Trip trip = tripRepository.findById(tripId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 여행입니다."));
-
-        // 권한 확인 (내 여행인지)
-        if (!trip.getUser().getUserId().equals(userId)) {
-            throw new IllegalArgumentException("수정 권한이 없습니다.");
-        }
+        Trip trip = tripAuthorizationService.getAuthorizedTrip(tripId, userId);
 
         // 이미지 처리 로직
         String imageUrlToUse = trip.getImageUrl(); // 기본적으로 기존 이미지 유지
@@ -168,16 +151,7 @@ public class TripService {
     // 여행 삭제
     @Transactional
     public void deleteTrip(Long tripId, String userId) {
-        // 1. 여행 찾기
-        Trip trip = tripRepository.findById(tripId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 여행입니다."));
-
-        // 2. 권한 확인 (작성자 검증)
-        if (!trip.getUser().getUserId().equals(userId)) {
-            throw new IllegalArgumentException("삭제 권한이 없습니다.");
-        }
-
-        // 3. 삭제 수행
+        Trip trip = tripAuthorizationService.getAuthorizedTrip(tripId, userId);
         tripRepository.delete(trip);
     }
 }

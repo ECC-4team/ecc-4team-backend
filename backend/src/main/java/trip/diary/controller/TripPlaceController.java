@@ -16,6 +16,8 @@ import lombok.Setter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import trip.diary.dto.PlaceRequest;
@@ -57,8 +59,8 @@ public class TripPlaceController {
     })
     @GetMapping
     public ResponseEntity<List<PlaceListResponse>> getPlaces(
-            @Parameter(description = "여행 ID", required = true) @PathVariable Long tripId) {
-        List<PlaceListResponse> places = tripPlaceService.getPlaces(tripId);
+            @Parameter(description = "여행 ID", required = true) @PathVariable Long tripId,@AuthenticationPrincipal UserDetails userDetails ) {
+        List<PlaceListResponse> places = tripPlaceService.getPlaces(tripId, userDetails.getUsername());
         return ResponseEntity.ok(places);
     }
 
@@ -84,8 +86,9 @@ public class TripPlaceController {
     @GetMapping("/{placeId}")
     public ResponseEntity<PlaceDetailResponse> getPlace(
             @Parameter(description = "여행 ID", required = true) @PathVariable Long tripId,
-            @Parameter(description = "장소 ID", required = true) @PathVariable Long placeId) {
-        PlaceDetailResponse place = tripPlaceService.getPlace(tripId, placeId);
+            @Parameter(description = "장소 ID", required = true) @PathVariable Long placeId,
+            @AuthenticationPrincipal UserDetails userDetails ) {
+        PlaceDetailResponse place = tripPlaceService.getPlace(tripId, placeId, userDetails.getUsername());
         return ResponseEntity.ok(place);
     }
 
@@ -106,12 +109,13 @@ public class TripPlaceController {
     public ResponseEntity<PlaceResponse> createPlace(
             @PathVariable Long tripId,
             @RequestPart("data") String data,
-            @RequestPart(value = "images", required = false) List<MultipartFile> images
+            @RequestPart(value = "images", required = false) List<MultipartFile> images,
+            @AuthenticationPrincipal UserDetails userDetails
     ) throws JsonProcessingException {
 
         PlaceRequest request = OBJECT_MAPPER.readValue(data, PlaceRequest.class);
 
-        Long placeId = tripPlaceService.createPlace(tripId, request, images);
+        Long placeId = tripPlaceService.createPlace(tripId, request, images, userDetails.getUsername());
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new PlaceResponse(placeId));
@@ -145,7 +149,8 @@ public class TripPlaceController {
             @PathVariable Long tripId,
             @PathVariable Long placeId,
             @RequestPart("data") String data,
-            @RequestPart(value = "images", required = false) List<MultipartFile> images
+            @RequestPart(value = "images", required = false) List<MultipartFile> images,
+            @AuthenticationPrincipal UserDetails userDetails
     ) throws JsonProcessingException {
 
         PlaceRequest request = OBJECT_MAPPER.readValue(data, PlaceRequest.class);
@@ -158,7 +163,7 @@ public class TripPlaceController {
                     .collect(Collectors.toList());
         }
 
-        tripPlaceService.updatePlace(tripId, placeId, request, imageList);
+        tripPlaceService.updatePlace(tripId, placeId, request, imageList, userDetails.getUsername());
         return ResponseEntity.ok(new PlaceResponse(placeId));
     }
 
@@ -191,8 +196,9 @@ public class TripPlaceController {
     @DeleteMapping("/{placeId}")
     public ResponseEntity<Void> deletePlace(
             @Parameter(description = "여행 ID", required = true) @PathVariable Long tripId,
-            @Parameter(description = "장소 ID", required = true) @PathVariable Long placeId) {
-        tripPlaceService.deletePlace(tripId, placeId);
+            @Parameter(description = "장소 ID", required = true) @PathVariable Long placeId,
+            @AuthenticationPrincipal UserDetails userDetails ) {
+        tripPlaceService.deletePlace(tripId, placeId, userDetails.getUsername());
         return ResponseEntity.noContent().build();
     }
 

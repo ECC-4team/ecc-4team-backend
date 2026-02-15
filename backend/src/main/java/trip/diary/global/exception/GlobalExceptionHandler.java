@@ -50,5 +50,11 @@ public class GlobalExceptionHandler {
         // "서버 오류가 발생했습니다" 대신, 실제 에러 메시지를 반환하도록 수정
         return new ErrorResponse("서버 오류: " + e.toString() + " / " + e.getMessage());
     }
+
+    @ExceptionHandler(ForbiddenException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ErrorResponse handleForbidden(ForbiddenException e) {
+        return new ErrorResponse(e.getMessage());
+    }
 }
 

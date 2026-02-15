@@ -8,12 +8,10 @@ import trip.diary.dto.TimelineItemUpdateRequest;
 import trip.diary.dto.TripDayBulkUpdateRequest;
 import trip.diary.entity.Place;
 import trip.diary.entity.TimelineItem;
-import trip.diary.entity.Trip;
 import trip.diary.entity.TripDay;
 import trip.diary.repository.PlaceRepository;
 import trip.diary.repository.TimelineItemRepository;
 import trip.diary.repository.TripDayRepository;
-import trip.diary.repository.TripRepository;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -25,17 +23,15 @@ import java.time.LocalTime;
 @RequiredArgsConstructor
 public class TimelineService {
 
-    private final TripRepository tripRepository;
     private final TripDayRepository tripDayRepository;
     private final TimelineItemRepository timelineItemRepository;
     private final PlaceRepository placeRepository;
+    private final TripAuthorizationService tripAuthorizationService;
 
     //타임라인 별 아이템들 조회
     @Transactional(readOnly = true)
-    public TimelineDto.TimelineListResponse getTimeline(Long tripId){
-        //trip 있는지 확인
-        tripRepository.findById(tripId)
-                .orElseThrow(() -> new IllegalArgumentException("trip not found"));
+    public TimelineDto.TimelineListResponse getTimeline(Long tripId, String userId){
+        tripAuthorizationService.getAuthorizedTrip(tripId, userId);
 
         //타임라인들 가져오기
         List<TripDay> days = tripDayRepository.findByTrip_IdOrderByDayDateAsc(tripId);
@@ -104,7 +100,8 @@ public class TimelineService {
 
     //아이템 추가
     @Transactional
-    public Long addTimelineItem(Long tripId, TimelineDto.TimelineItemCreateRequest request){
+    public Long addTimelineItem(Long tripId, TimelineDto.TimelineItemCreateRequest request, String userId){
+        tripAuthorizationService.getAuthorizedTrip(tripId, userId);
 
         //예외 처리
         if (request == null) throw new IllegalArgumentException("요청이 비어있습니다");
@@ -148,16 +145,19 @@ public class TimelineService {
 
     //아이템 삭제
     @Transactional
-    public void deleteTimelineItem(Long timelineItemId) {
+    public void deleteTimelineItem(Long timelineItemId, String userId) {
         TimelineItem item = timelineItemRepository.findById(timelineItemId)
                 .orElseThrow(() -> new IllegalArgumentException("timeline item not found"));
+        Long tripId = item.getDay().getTrip().getId();
+        tripAuthorizationService.getAuthorizedTrip(tripId, userId);
 
         timelineItemRepository.delete(item);
     }
 
 
     @Transactional
-    public void updateTripDays(Long tripId, TripDayBulkUpdateRequest req){
+    public void updateTripDays(Long tripId, TripDayBulkUpdateRequest req, String userId){
+        tripAuthorizationService.getAuthorizedTrip(tripId, userId);
 
         //제대로 값이 들어왔는지 확인
         if (req == null || req.getDays() == null || req.getDays().isEmpty()) {
@@ -201,7 +201,8 @@ public class TimelineService {
     }
 
     @Transactional
-    public void updateTimelineItem( Long tripId,Long timelineId, TimelineItemUpdateRequest request){
+    public void updateTimelineItem(Long tripId, Long timelineId, TimelineItemUpdateRequest request, String userId){
+        tripAuthorizationService.getAuthorizedTrip(tripId, userId);
         if (request.dayDate()== null) throw new IllegalArgumentException("dayDate는 필수입니다");
         if (request.startTime() == null || request.endTime() == null) throw new IllegalArgumentException("startTime/endTime은 필수입니다");
         if (!request.startTime().isBefore(request.endTime())) {

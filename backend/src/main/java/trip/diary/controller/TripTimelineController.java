@@ -7,6 +7,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import trip.diary.dto.TimelineDto;
 import trip.diary.dto.TimelineItemUpdateRequest;
@@ -45,8 +47,9 @@ public class TripTimelineController {
     )
     //GET /trips/{tripId}/timeline
     @GetMapping("/{tripId}/timeline")
-    public ResponseEntity<TimelineDto.TimelineListResponse> getTimeline(@PathVariable Long tripId){
-        TimelineDto.TimelineListResponse response= timelineService.getTimeline(tripId);
+    public ResponseEntity<TimelineDto.TimelineListResponse> getTimeline(@PathVariable Long tripId,
+                                                                        @AuthenticationPrincipal UserDetails userDetails){
+        TimelineDto.TimelineListResponse response= timelineService.getTimeline(tripId, userDetails.getUsername());
         return ResponseEntity.ok(response);
     }
 
@@ -77,8 +80,10 @@ public class TripTimelineController {
     )
     //POST /trips/{tripId}/timeline
     @PostMapping("/{tripId}/timeline")
-    public ResponseEntity<TimelineDto.TimelineItemCreateResponse> createTimelineItem(@PathVariable Long tripId, @RequestBody TimelineDto.TimelineItemCreateRequest request){
-        Long timelineItemId=timelineService.addTimelineItem(tripId,request);
+    public ResponseEntity<TimelineDto.TimelineItemCreateResponse> createTimelineItem(@PathVariable Long tripId,
+                                                                                      @RequestBody TimelineDto.TimelineItemCreateRequest request,
+                                                                                      @AuthenticationPrincipal UserDetails userDetails){
+        Long timelineItemId=timelineService.addTimelineItem(tripId, request, userDetails.getUsername());
         return ResponseEntity.ok(new TimelineDto.TimelineItemCreateResponse(timelineItemId));
 
     }
@@ -96,8 +101,9 @@ public class TripTimelineController {
     )
     //DELETE /timeline/{timelineId}
     @DeleteMapping("/timeline/{timelineId}")
-    public ResponseEntity<Void> deleteTimelineItem(@PathVariable Long timelineId){
-        timelineService.deleteTimelineItem(timelineId);
+    public ResponseEntity<Void> deleteTimelineItem(@PathVariable Long timelineId,
+                                                   @AuthenticationPrincipal UserDetails userDetails){
+        timelineService.deleteTimelineItem(timelineId, userDetails.getUsername());
         return ResponseEntity.ok().build();
     }
 
@@ -121,8 +127,10 @@ public class TripTimelineController {
 
     //PUT /trips/{tripId}/days
     @PutMapping("/{tripId}/days")
-    public ResponseEntity<Void> updateTripDays(@PathVariable Long tripId, @RequestBody TripDayBulkUpdateRequest request){
-        timelineService.updateTripDays(tripId,request);
+    public ResponseEntity<Void> updateTripDays(@PathVariable Long tripId,
+                                               @RequestBody TripDayBulkUpdateRequest request,
+                                               @AuthenticationPrincipal UserDetails userDetails){
+        timelineService.updateTripDays(tripId, request, userDetails.getUsername());
         return ResponseEntity.noContent().build();//204
     }
 
@@ -148,8 +156,11 @@ public class TripTimelineController {
 
     //PUT /trips/{tripId}/timeline/{timelineId}
     @PutMapping("/{tripId}/timeline/{timelineId}")
-    public ResponseEntity<Void> updateTimelineItem(@PathVariable Long tripId, @PathVariable Long timelineId, @RequestBody TimelineItemUpdateRequest request){
-        timelineService.updateTimelineItem(tripId,timelineId,request);
+    public ResponseEntity<Void> updateTimelineItem(@PathVariable Long tripId,
+                                                   @PathVariable Long timelineId,
+                                                   @RequestBody TimelineItemUpdateRequest request,
+                                                   @AuthenticationPrincipal UserDetails userDetails){
+        timelineService.updateTimelineItem(tripId, timelineId, request, userDetails.getUsername());
         return ResponseEntity.noContent().build();//204
     }
 }
