@@ -32,7 +32,7 @@ public class TripUpdateRequest {
     private LocalDate endDate;
     */
 
-    @Schema(description = "수정할 대표 이미지 URL", example = "https://i.imgur.com/bM8yb4v.jpeg")
+    @Schema(description = "수정할 대표 이미지 URL", example = "https://i.imgur.com/5eDmhnp.jpeg")
     private String imageUrl;
 
     @Schema(description = "수정할 설명", example = "일정이 변경되어 수정함")

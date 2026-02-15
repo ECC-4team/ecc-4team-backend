@@ -32,7 +32,7 @@ public class TripDto {
     @Schema(description = "여행 상태 (1: 다녀온 여행, 2: 예정된 여행)", example = "1")
     private int status; // 1: 다녀온 여행, 2: 예정된 여행
 
-    @Schema(description = "썸네일 이미지 URL", example = "https://i.imgur.com/bM8yb4v.jpeg")
+    @Schema(description = "썸네일 이미지 URL", example = "https://i.imgur.com/5eDmhnp.jpeg")
     private String imageUrl;    // 썸네일 이미지
 
     @Schema(description = "여행 설명 (Note)", example = "친구들과 함께 갔던 잊지 못할 여름 휴가")
