@@ -80,8 +80,7 @@ public class TripController {
     })
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<CommonResponse<Long>> createTrip(
-            // [핵심 변경] 객체가 아니라 String으로 받습니다.
-            // 이렇게 하면 헤더가 octet-stream이든 text든 무조건 받아집니다.
+
             @Parameter(description = "여행 정보 JSON (String)", required = true)
             @RequestPart("data") String data,
 
@@ -179,14 +178,7 @@ public class TripController {
                                                       "message": "수정 권한이 없습니다."
                                                     }
                                                     """),
-                                    @ExampleObject(name = "2. 날짜 오류",
-                                            summary = "종료일 < 시작일",
-                                            value = """
-                                                    {
-                                                      "message": "여행 종료일은 시작일보다 빠를 수 없습니다."
-                                                    }
-                                                    """),
-                                    @ExampleObject(name = "3. 필수값 누락",
+                                    @ExampleObject(name = "2. 필수값 누락",
                                             summary = "필수 데이터 누락 (@Valid)",
                                             value = """
                                                     {
@@ -207,14 +199,25 @@ public class TripController {
                                             """)
                     ))
     })
-    @PatchMapping("/{tripId}")
-    public ResponseEntity<CommonResponse<Void>> updateTrip(
+    @PatchMapping(value = "/{tripId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<CommonResponse<TripDetailDto>> updateTrip(
             @Parameter(description = "여행 ID", example = "1") @PathVariable Long tripId,
-            @Valid @RequestBody TripUpdateRequest request,
-            @Parameter(hidden = true) @AuthenticationPrincipal UserDetails userDetails) {
 
-        tripService.updateTrip(tripId, request, userDetails.getUsername());
-        return ResponseEntity.ok(CommonResponse.success());
+            @Parameter(description = "수정할 정보 JSON (String)", required = true)
+            @RequestPart("data") String data,
+
+            @Parameter(description = "변경할 이미지 파일 (없으면 기존 이미지 유지)", required = false)
+            @RequestPart(value = "image", required = false) MultipartFile image,
+
+            @Parameter(hidden = true) @AuthenticationPrincipal UserDetails userDetails) throws JsonProcessingException {
+
+        // 1. JSON String -> DTO 변환
+        TripUpdateRequest request = objectMapper.readValue(data, TripUpdateRequest.class);
+
+        // 2. 서비스 호출 (이미지 파일도 같이 넘김)
+        TripDetailDto updatedTrip = tripService.updateTrip(tripId, request, image, userDetails.getUsername());
+
+        return ResponseEntity.ok(CommonResponse.success(updatedTrip));
     }
 
     // 여행 삭제

@@ -24,11 +24,13 @@ public class TripUpdateRequest {
     @Schema(description = "국내/해외 구분(국내이면 true / 해외면 false)", example = "true")
     private Boolean isDomestic;
 
+    /*
     @Schema(description = "수정할 시작 날짜", example = "2024-07-02")
     private LocalDate startDate;
 
     @Schema(description = "수정할 종료 날짜", example = "2024-07-06")
     private LocalDate endDate;
+    */
 
     @Schema(description = "수정할 대표 이미지 URL", example = "https://i.imgur.com/bM8yb4v.jpeg")
     private String imageUrl;

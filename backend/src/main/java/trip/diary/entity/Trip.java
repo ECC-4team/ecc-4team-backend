@@ -84,19 +84,17 @@ public class Trip {
     }
 
     // 여행 정보 수정 메서드
-    public void update(String title, String destination, Boolean isDomestic, LocalDate startDate, LocalDate endDate, String imageUrl, String description) {
+    public void update(String title, String destination, Boolean isDomestic, String imageUrl, String description) {
         // 값이 들어온 경우에만 수정 (null이면 기존 값 유지)
         if (title != null) this.title = title;
         if (destination != null) this.destination = destination;
         if (isDomestic != null) this.isDomestic = isDomestic;
-        if (startDate != null) this.startDate = startDate;
-        if (endDate != null) this.endDate = endDate;
         if (imageUrl != null) this.imageUrl = imageUrl;
         if (description != null) this.description = description;
 
-        // 날짜가 변경되었을 수 있으니 status(상태) 다시 계산
+        /* 날짜 수정시 상태 계산 로직
         if (this.endDate != null) {
             this.status = LocalDate.now().isAfter(this.endDate) ? 1 : 2;
-        }
+        } */
     }
 }

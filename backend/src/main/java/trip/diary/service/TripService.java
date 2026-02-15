@@ -126,7 +126,7 @@ public class TripService {
 
     // 여행 수정
     @Transactional
-    public TripDetailDto updateTrip(Long tripId, TripUpdateRequest request, String userId) {
+    public TripDetailDto updateTrip(Long tripId, TripUpdateRequest request, MultipartFile image, String userId) {
         // 여행 찾기
         Trip trip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 여행입니다."));
@@ -136,30 +136,27 @@ public class TripService {
             throw new IllegalArgumentException("수정 권한이 없습니다.");
         }
 
-        // 이미지 처리 (Null일 경우 기본값)
-        // 값을 안 보낸 경우에는 수정X
-        // 값을 빈 문자열("")로 보낸 경우 기본 이미지로 초기화
-        String imageUrlToUse = request.getImageUrl();
-        if (imageUrlToUse != null && imageUrlToUse.isBlank()) {
-            imageUrlToUse = DEFAULT_IMAGE_URL;
+        // 이미지 처리 로직
+        String imageUrlToUse = trip.getImageUrl(); // 기본적으로 기존 이미지 유지
+
+        if (image != null && !image.isEmpty()) {
+            // 새 파일이 들어왔으면 Cloudinary 업로드 후 URL 교체
+            imageUrlToUse = imageStorageService.upload(image);
         }
 
-        // 날짜 유효성 검사
-        // 요청에 날짜가 있으면 그걸 쓰고, 없으면(null) 기존 DB에 있는 날짜를 가져와서 비교
+        /* 날짜 유효성 검사 로직
         LocalDate startDateToCheck = (request.getStartDate() != null) ? request.getStartDate() : trip.getStartDate();
         LocalDate endDateToCheck = (request.getEndDate() != null) ? request.getEndDate() : trip.getEndDate();
 
         if (endDateToCheck.isBefore(startDateToCheck)) {
             throw new IllegalArgumentException("여행 종료일은 시작일보다 빠를 수 없습니다.");
-        }
+        } */
 
         // 내용 수정 (Entity의 update 메서드 호출)
         trip.update(
                 request.getTitle(),
                 request.getDestination(),
                 request.getIsDomestic(),
-                request.getStartDate(),
-                request.getEndDate(),
                 imageUrlToUse,
                 request.getDescription()
         );
