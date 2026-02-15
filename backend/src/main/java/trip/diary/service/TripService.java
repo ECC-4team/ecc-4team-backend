@@ -29,7 +29,7 @@ public class TripService {
     private final ImageStorageService imageStorageService;
     private final TripAuthorizationService tripAuthorizationService;
 
-    private static final String DEFAULT_IMAGE_URL = "https://i.imgur.com/bM8yb4v.jpeg";
+    private static final String DEFAULT_IMAGE_URL = "https://i.imgur.com/5eDmhnp.jpeg";
 
     // 여행 생성
     public Long createTrip(TripCreateRequest request, MultipartFile image, String userId) {
