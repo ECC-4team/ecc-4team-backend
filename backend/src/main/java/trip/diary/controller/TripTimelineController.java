@@ -54,7 +54,7 @@ public class TripTimelineController {
 
 
     @Operation(
-            summary = "일정 추가",
+            summary = "타임라인 아이템 추가",
             description = "특정 날짜(day)에 새로운 일정(타임라인 아이템)을 추가합니다.",
             responses = {
                     @ApiResponse(
@@ -87,7 +87,7 @@ public class TripTimelineController {
 
 
     @Operation(
-            summary = "일정 삭제",
+            summary = "타임라인 아이템 삭제",
             description = "타임라인 아이템 ID로 일정을 삭제합니다.",
             responses = {
                     @ApiResponse(responseCode = "200", description = "삭제 성공"),
@@ -132,14 +132,13 @@ public class TripTimelineController {
             summary = "타임라인 아이템 수정",
             description = """
                     특정 여행(tripId)의 타임라인 아이템(timelineId)을 수정합니다.
-                    - 시간은 30분 단위(00/30)만 허용
                     - 같은 날짜(TripDay) 내에서 시간이 겹치면 409 반환
                     - 끝시간=다음 일정 시작시간은 허용(겹침 아님)
                     """
     )
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "수정 성공 (No Content)"),
-            @ApiResponse(responseCode = "400", description = "요청값 검증 실패 (시간 형식/30분 단위/시작>=끝 등)",
+            @ApiResponse(responseCode = "400", description = "요청값 검증 실패 (시간 형식/시작>=끝 등)",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "대상 리소스 없음 (trip/day/timeline/place not found)",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),

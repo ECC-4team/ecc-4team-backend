@@ -201,7 +201,7 @@ public class TimelineService {
     }
 
     @Transactional
-    public void updateTimelineItem(Long timelineId, Long tripId, TimelineItemUpdateRequest request){
+    public void updateTimelineItem( Long tripId,Long timelineId, TimelineItemUpdateRequest request){
         if (request.dayDate()== null) throw new IllegalArgumentException("dayDate는 필수입니다");
         if (request.startTime() == null || request.endTime() == null) throw new IllegalArgumentException("startTime/endTime은 필수입니다");
         if (!request.startTime().isBefore(request.endTime())) {
