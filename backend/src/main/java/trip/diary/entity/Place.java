@@ -31,7 +31,7 @@ public class Place {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(nullable = false, length = 30)
+    @Column( length = 30)
     private String category;
 
     @Column(name = "created_at", nullable = false, updatable = false)

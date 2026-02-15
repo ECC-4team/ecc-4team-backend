@@ -28,6 +28,17 @@ public class TripPlaceService {
     private final ImageStorageService imageStorageService;
     private final TripRepository tripRepository;
 
+    private static final String DEFAULT_PLACE_IMAGE_URL = "https://res.cloudinary.com/dxlycqpyp/image/upload/v1771146721/KakaoTalk_20260215_125901244_nzvsch.png";
+
+    private static final Map<String, String> CATEGORY_DEFAULT_IMAGE_MAP = Map.of(
+            "쇼핑", "https://res.cloudinary.com/dxlycqpyp/image/upload/v1771146720/KakaoTalk_20260215_125850088_02_qrxjmg.png",
+            "체험", "https://res.cloudinary.com/dxlycqpyp/image/upload/v1771146720/KakaoTalk_20260215_125850088_iarx8o.png",
+            "숙소", "https://res.cloudinary.com/dxlycqpyp/image/upload/v1771146720/KakaoTalk_20260215_125850088_03_xifp0v.png",
+            "관광", "https://res.cloudinary.com/dxlycqpyp/image/upload/v1771146720/KakaoTalk_20260215_125850088_01_uwezty.png",
+            "맛집", "https://res.cloudinary.com/dxlycqpyp/image/upload/v1771146720/KakaoTalk_20260215_125850088_04_a8ixcj.png",
+            "카페/디저트", "https://res.cloudinary.com/dxlycqpyp/image/upload/v1771146720/KakaoTalk_20260215_125850088_05_gy3bvu.png"
+    );
+
 
     public List<PlaceListResponse> getPlaces(Long tripId) {
 
@@ -105,7 +116,7 @@ public class TripPlaceService {
             throw new IllegalArgumentException("요청이 비어있습니다");
         }
 
-        if(request.name() == null ||request.category() == null ){
+        if(request.name() == null ){
             throw new IllegalArgumentException("필수 입력칸이 비어있습니다");
         }
 
@@ -119,9 +130,28 @@ public class TripPlaceService {
         //이미지가 있다면 저장
         if (images != null && !images.isEmpty()) {
             savePhotos(savedPlace, images, request.coverIndex());
+        }else{
+            saveDefaultCoverPhoto(savedPlace);
         }
 
         return savedPlace.getId();
+
+    }
+
+    private void saveDefaultCoverPhoto(Place place) {
+        String category= place.getCategory();
+
+        //디폴트 이미지 설정
+        String defaultImageUrl;
+        if (category == null || category.isBlank()) {
+            defaultImageUrl= DEFAULT_PLACE_IMAGE_URL;
+        }else{
+            defaultImageUrl=CATEGORY_DEFAULT_IMAGE_MAP.getOrDefault(category.trim(), DEFAULT_PLACE_IMAGE_URL);
+        }
+
+        //디폴트 이미지로 설정된것 디비에 저장
+        PlacePhoto defaultPhoto = PlacePhoto.create(place, defaultImageUrl, true);
+        placePhotoRepository.save(defaultPhoto);
 
     }
 
@@ -153,6 +183,8 @@ public class TripPlaceService {
 
             if (!images.isEmpty()) {
                 savePhotos(place, images, request.coverIndex());
+            } else {
+                saveDefaultCoverPhoto(place);
             }
         }
 
