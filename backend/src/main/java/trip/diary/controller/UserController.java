@@ -23,7 +23,7 @@ import java.util.Map;
 
 @Tag(name = "회원 관리 API", description = "회원가입, 로그인, 로그아웃 기능")
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/api/users")
 @RequiredArgsConstructor
 public class UserController {
 

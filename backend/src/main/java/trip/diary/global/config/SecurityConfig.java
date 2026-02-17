@@ -39,7 +39,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // options 인증 요구 허용
-                        .requestMatchers("/css/**", "/js/**", "/users/**", "/h2-console/**",
+                        .requestMatchers("/css/**", "/js/**", "/users/**","/api/users/**", "/h2-console/**",
                                 "/v3/api-docs/**","/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .anyRequest().authenticated()
                 )
