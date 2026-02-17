@@ -10,7 +10,6 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -96,5 +95,15 @@ public class Trip {
         if (this.endDate != null) {
             this.status = LocalDate.now().isAfter(this.endDate) ? 1 : 2;
         } */
+    }
+
+    // 날짜 기준으로 상태(status)를 자동 업데이트
+    public void updateStatus() {
+        LocalDate today = LocalDate.now();
+
+        // 종료일이 오늘 날짜보다 이전이고 & 기존 상태가 '새로운 여행'이라면 '다녀온 여행'으로 변경
+        if (this.endDate.isBefore(today) && this.status != 1) {
+            this.status = 1;
+        }
     }
 }

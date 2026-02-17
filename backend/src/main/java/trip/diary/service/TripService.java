@@ -96,12 +96,21 @@ public class TripService {
     }
 
     // 여행 목록 조회
-    @Transactional(readOnly = true)
+    @Transactional
     public List<TripDto> getTrips(String userId) {
         User user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
 
-        return tripRepository.findAllByUserOrderByStartDateDesc(user).stream()
+        // 1. 유저의 모든 여행 목록 가져오기
+        List<Trip> trips = tripRepository.findAllByUserOrderByStartDateDesc(user);
+
+        // 2. 가져온 여행들을 하나씩 검사해서 상태 업데이트
+        for (Trip trip : trips) {
+            trip.updateStatus();
+        }
+
+        // 3. DTO로 변환해서 반환
+        return trips.stream()
                 .map(TripDto::from)
                 .collect(Collectors.toList());
     }
