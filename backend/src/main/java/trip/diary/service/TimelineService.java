@@ -14,11 +14,15 @@ import trip.diary.repository.PlaceRepository;
 import trip.diary.repository.TimelineItemRepository;
 import trip.diary.repository.TripDayRepository;
 
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.function.Function;
 import java.time.LocalTime;
-
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -29,29 +33,25 @@ public class TimelineService {
     private final PlaceRepository placeRepository;
     private final TripAuthorizationService tripAuthorizationService;
 
-    //타임라인 별 아이템들 조회
     @Transactional(readOnly = true)
-    public TimelineDto.TimelineListResponse getTimeline(Long tripId, String userId){
+    public TimelineDto.TimelineListResponse getTimeline(Long tripId, String userId) {
         tripAuthorizationService.getAuthorizedTrip(tripId, userId);
 
-        //타임라인들 가져오기
         List<TripDay> days = tripDayRepository.findByTrip_IdOrderByDayDateAsc(tripId);
         if (days.isEmpty()) {
             return new TimelineDto.TimelineListResponse(List.of());
         }
 
-        //일정 아이템들 조회
         List<Long> dayIds = days.stream().map(TripDay::getId).toList();
         List<TimelineItem> items = timelineItemRepository
                 .findByDay_IdInOrderByDay_IdAscStartTimeAsc(dayIds);
 
-        // 각각의 아이템의 placeIds 모으기
         Set<Long> placeIds = items.stream()
                 .map(TimelineItem::getPlace)
                 .filter(Objects::nonNull)
                 .map(Place::getId)
                 .collect(Collectors.toSet());
-        //placeIds 모은걸로 한꺼번에 조회하기(쿼리 횟수 줄이기위해)
+
         Map<Long, String> placeNameMap = new HashMap<>();
         if (!placeIds.isEmpty()) {
             List<Place> places = placeRepository.findByIdInAndTrip_Id(placeIds, tripId);
@@ -59,141 +59,107 @@ public class TimelineService {
                     .collect(Collectors.toMap(Place::getId, Place::getName, (a, b) -> a));
         }
 
-        // dayId -> items 매핑(itemsByDayId)
         Map<Long, List<TimelineDto.TimelineItemResponse>> itemsByDayId = new HashMap<>();
+        for (TimelineItem item : items) {
+            Long dayId = item.getDay().getId();
+            Long placeId = item.getPlace().getId();
+            String placeName = placeNameMap.get(placeId);
 
-        for (TimelineItem it : items) {
-            Long dayId = it.getDay().getId();
-
-            Long placeId = (it.getPlace() == null) ? null : it.getPlace().getId();
-            String placeName = (placeId == null) ? null : placeNameMap.get(placeId);
-
-            TimelineDto.TimelineItemResponse resp = new TimelineDto.TimelineItemResponse(
-                    it.getId(),
-                    it.getStartTime(),
-                    it.getEndTime(),
+            TimelineDto.TimelineItemResponse response = new TimelineDto.TimelineItemResponse(
+                    item.getId(),
+                    item.getStartTime(),
+                    item.getEndTime(),
                     placeId,
                     placeName
             );
-
-            itemsByDayId.computeIfAbsent(dayId, k -> new ArrayList<>()).add(resp);
+            itemsByDayId.computeIfAbsent(dayId, k -> new ArrayList<>()).add(response);
         }
 
-
-        // days 응답 구성
         List<TimelineDto.TripDayTimelineResponse> dayResponses = days.stream()
-                .map(d -> new TimelineDto.TripDayTimelineResponse(
-                        d.getId(),
-                        d.getDayDate(),
-                        d.getDayIndex(),
-                        d.getThemeTitle(),
-                        d.getDayNote(),
-                        d.getBudgetPlanned(),
-                        d.getBudgetSpent(),
-                        itemsByDayId.getOrDefault(d.getId(), List.of())
+                .map(day -> new TimelineDto.TripDayTimelineResponse(
+                        day.getId(),
+                        day.getDayDate(),
+                        day.getDayIndex(),
+                        day.getThemeTitle(),
+                        day.getDayNote(),
+                        day.getBudgetPlanned(),
+                        day.getBudgetSpent(),
+                        itemsByDayId.getOrDefault(day.getId(), List.of())
                 ))
                 .toList();
 
         return new TimelineDto.TimelineListResponse(dayResponses);
-
-
     }
 
-    //아이템 추가
     @Transactional
-    public Long addTimelineItem(Long tripId, TimelineDto.TimelineItemCreateRequest request, String userId){
+    public Long addTimelineItem(Long tripId, TimelineDto.TimelineItemCreateRequest request, String userId) {
         tripAuthorizationService.getAuthorizedTrip(tripId, userId);
 
-        //예외 처리
-        if (request == null) throw new IllegalArgumentException("요청이 비어있습니다");
-        if (request.dayDate() == null) throw new IllegalArgumentException("dayDate는 필수입니다");
+        if (request == null) throw new IllegalArgumentException("request is required");
+        if (request.dayDate() == null) throw new IllegalArgumentException("dayDate is required");
+        if (request.startTime() == null || request.endTime() == null) {
+            throw new IllegalArgumentException("startTime/endTime is required");
+        }
+        if (!request.startTime().isBefore(request.endTime())) {
+            throw new IllegalArgumentException("startTime must be before endTime");
+        }
+        if (request.placeId() == null) throw new IllegalArgumentException("placeId is required");
 
-        LocalTime start = request.startTime();
-        LocalTime end = request.endTime();
-
-        if (start == null || end == null)
-            throw new IllegalArgumentException("startTime/endTime은 필수입니다");
-        if (!start.isBefore(end))
-            throw new IllegalArgumentException("startTime은 endTime보다 빨라야 합니다");
-
-
-        // 사용자가 선택한 day 찾기
         TripDay day = tripDayRepository.findByTrip_IdAndDayDate(tripId, request.dayDate())
                 .orElseThrow(() -> new IllegalArgumentException("day not found"));
 
-
-        // 겹침 체크 (같은 day 안에서의)
         boolean overlapped = timelineItemRepository
-                .existsByDay_IdAndStartTimeLessThanAndEndTimeGreaterThan(day.getId(), end, start);
-
+                .existsByDay_IdAndStartTimeLessThanAndEndTimeGreaterThan(
+                        day.getId(), request.endTime(), request.startTime());
         if (overlapped) {
-            throw new IllegalArgumentException("이미 해당 시간대에 일정이 존재합니다");
+            throw new IllegalArgumentException("time overlap exists");
         }
 
-        Place place = null;
-        if (request.placeId() != null) {
-            // 사용자가 선택한 장소 찾기
-            place = placeRepository.findByIdAndTrip_Id(request.placeId(), tripId)
-                    .orElseThrow(() -> new IllegalArgumentException("place not found"));
-        }
+        Place place = placeRepository.findByIdAndTrip_Id(request.placeId(), tripId)
+                .orElseThrow(() -> new IllegalArgumentException("place not found"));
 
-        //저장
         TimelineItem item = TimelineItem.create(day, request.startTime(), request.endTime(), place);
         TimelineItem saved = timelineItemRepository.save(item);
-
         return saved.getId();
     }
 
-    //아이템 삭제
     @Transactional
     public void deleteTimelineItem(Long timelineItemId, String userId) {
         TimelineItem item = timelineItemRepository.findById(timelineItemId)
                 .orElseThrow(() -> new IllegalArgumentException("timeline item not found"));
+
         Long tripId = item.getDay().getTrip().getId();
         tripAuthorizationService.getAuthorizedTrip(tripId, userId);
-
         timelineItemRepository.delete(item);
     }
 
-
     @Transactional
-    public void updateTripDays(Long tripId, TripDayBulkUpdateRequest req, String userId){
+    public void updateTripDays(Long tripId, TripDayBulkUpdateRequest request, String userId) {
         tripAuthorizationService.getAuthorizedTrip(tripId, userId);
 
-        //제대로 값이 들어왔는지 확인
-        if (req == null || req.getDays() == null || req.getDays().isEmpty()) {
+        if (request == null || request.getDays() == null || request.getDays().isEmpty()) {
             throw new IllegalArgumentException("days is required");
         }
 
-        //null이 아닌 dayId들 리스트 생성
-        List<Long> dayIds = req.getDays().stream()
+        List<Long> dayIds = request.getDays().stream()
                 .map(TripDayBulkUpdateRequest.TripDayUpdateItem::getDayId)
                 .filter(Objects::nonNull)
                 .toList();
 
-        //모든 day가 다 들어왔는지 확인
-        if (dayIds.size() != req.getDays().size()) {
+        if (dayIds.size() != request.getDays().size()) {
             throw new IllegalArgumentException("dayId is required for all items");
         }
 
-        //TripDay 리포지토리 조회
         List<TripDay> found = tripDayRepository.findAllByTrip_IdAndIdIn(tripId, dayIds);
-
-        //id랑 찾은 TripDay를 묶은 map 만들기
-        Map<Long, TripDay> map = found.stream()
+        Map<Long, TripDay> dayMap = found.stream()
                 .collect(Collectors.toMap(TripDay::getId, Function.identity()));
 
-
-        for (TripDayBulkUpdateRequest.TripDayUpdateItem item : req.getDays()) {
-
-            TripDay day = map.get(item.getDayId());
-
-            //디비에 존재하는건지 확인
+        for (TripDayBulkUpdateRequest.TripDayUpdateItem item : request.getDays()) {
+            TripDay day = dayMap.get(item.getDayId());
             if (day == null) {
                 throw new NotFoundException("TripDay not found: " + item.getDayId());
             }
 
-            //수정하기-> 알아서 저장됨(dirty checking)
             day.setThemeTitle(item.getThemeTitle());
             day.setDayNote(item.getDayNote());
             day.setBudgetPlanned(item.getBudgetPlanned());
@@ -202,49 +168,42 @@ public class TimelineService {
     }
 
     @Transactional
-    public void updateTimelineItem(Long tripId, Long timelineId, TimelineItemUpdateRequest request, String userId){
+    public void updateTimelineItem(Long tripId, Long timelineId, TimelineItemUpdateRequest request, String userId) {
         tripAuthorizationService.getAuthorizedTrip(tripId, userId);
-        if (request.dayDate()== null) throw new IllegalArgumentException("dayDate는 필수입니다");
-        if (request.startTime() == null || request.endTime() == null) throw new IllegalArgumentException("startTime/endTime은 필수입니다");
-        if (!request.startTime().isBefore(request.endTime())) {
-            throw new IllegalArgumentException("startTime은 endTime보다 빨라야 합니다");
-        }
 
-        // 수정 대상 item 조회
+        if (request.dayDate() == null) throw new IllegalArgumentException("dayDate is required");
+        if (request.startTime() == null || request.endTime() == null) {
+            throw new IllegalArgumentException("startTime/endTime is required");
+        }
+        if (!request.startTime().isBefore(request.endTime())) {
+            throw new IllegalArgumentException("startTime must be before endTime");
+        }
+        if (request.placeId() == null) throw new IllegalArgumentException("placeId is required");
+
         TimelineItem item = timelineItemRepository.findById(timelineId)
                 .orElseThrow(() -> new IllegalArgumentException("timeline item not found"));
 
-        // 소속 검증: timelineId가 이 trip의 일정이 맞는지
         Long itemTripId = item.getDay().getTrip().getId();
         if (!itemTripId.equals(tripId)) {
             throw new IllegalArgumentException("trip mismatch");
         }
 
-        // target day 조회 (날짜 이동 허용)
         TripDay targetDay = tripDayRepository.findByTrip_IdAndDayDate(tripId, request.dayDate())
                 .orElseThrow(() -> new IllegalArgumentException("day not found"));
 
-        // 겹침 체크 (자기 자신 제외)
         boolean overlapped = timelineItemRepository
                 .existsByDay_IdAndIdNotAndStartTimeLessThanAndEndTimeGreaterThan(
-                        targetDay.getId(), timelineId, request.endTime(), request.startTime()
-                );
+                        targetDay.getId(), timelineId, request.endTime(), request.startTime());
         if (overlapped) {
-            throw new IllegalArgumentException("이미 해당 시간대에 일정이 존재합니다");
+            throw new IllegalArgumentException("time overlap exists");
         }
 
-        //장소 존재하는지 확인하고 가져오기
-        Place place = null;
-        if (request.placeId() != null) {
-            place = placeRepository.findByIdAndTrip_Id(request.placeId(), tripId)
-                    .orElseThrow(() -> new IllegalArgumentException("place not found"));
-        }
+        Place place = placeRepository.findByIdAndTrip_Id(request.placeId(), tripId)
+                .orElseThrow(() -> new IllegalArgumentException("place not found"));
 
-        // 반영-> 저장 안해도 됨(dirty checking)
         item.setDay(targetDay);
         item.setStartTime(request.startTime());
         item.setEndTime(request.endTime());
         item.setPlace(place);
     }
-
 }

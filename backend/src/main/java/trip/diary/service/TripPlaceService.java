@@ -14,6 +14,7 @@ import trip.diary.global.exception.NotFoundException;
 import trip.diary.global.image.ImageStorageService;
 import trip.diary.repository.PlacePhotoRepository;
 import trip.diary.repository.PlaceRepository;
+import trip.diary.repository.TimelineItemRepository;
 
 import java.util.List;
 import java.util.Map;
@@ -25,6 +26,7 @@ public class TripPlaceService {
 
     private final PlaceRepository placeRepository;
     private final PlacePhotoRepository placePhotoRepository;
+    private final TimelineItemRepository timelineItemRepository;
     private final ImageStorageService imageStorageService;
     private final TripAuthorizationService tripAuthorizationService;
 
@@ -157,6 +159,7 @@ public class TripPlaceService {
         Place place = placeRepository.findByIdAndTrip_Id(placeId, tripId)
                 .orElseThrow(() -> new NotFoundException("place not found"));
 
+        timelineItemRepository.deleteByPlace_Id(placeId);
         placePhotoRepository.deleteByPlace_Id(placeId);
         placeRepository.delete(place);
     }
