@@ -8,6 +8,8 @@ import trip.diary.entity.Trip;
 import trip.diary.entity.TripDay;
 import trip.diary.entity.User;
 import trip.diary.global.exception.NotFoundException;
+import trip.diary.repository.PlacePhotoRepository;
+import trip.diary.repository.TimelineItemRepository;
 import trip.diary.repository.TripDayRepository;
 import trip.diary.repository.TripRepository;
 import trip.diary.repository.UserRepository;
@@ -26,6 +28,8 @@ public class TripService {
     private final TripRepository tripRepository;
     private final UserRepository userRepository;
     private final TripDayRepository tripDayRepository;
+    private final TimelineItemRepository timelineItemRepository;
+    private final PlacePhotoRepository placePhotoRepository;
     private final ImageStorageService imageStorageService;
     private final TripAuthorizationService tripAuthorizationService;
 
@@ -161,6 +165,8 @@ public class TripService {
     @Transactional
     public void deleteTrip(Long tripId, String userId) {
         Trip trip = tripAuthorizationService.getAuthorizedTrip(tripId, userId);
+        timelineItemRepository.deleteByDay_Trip_Id(tripId);
+        placePhotoRepository.deleteByPlace_Trip_Id(tripId);
         tripRepository.delete(trip);
     }
 }

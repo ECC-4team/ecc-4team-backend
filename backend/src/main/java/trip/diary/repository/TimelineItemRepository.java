@@ -11,6 +11,8 @@ public interface TimelineItemRepository extends JpaRepository<TimelineItem,Long>
 
     List<TimelineItem> findByDay_IdInOrderByDay_IdAscStartTimeAsc(Collection<Long> dayIds);
 
+    void deleteByDay_Trip_Id(Long tripId);
+
     // 같은 day 안에서 시간 겹치는 아이템이 존재하는지
     // overlap 조건: existing.start < newEnd AND existing.end > newStart
     boolean existsByDay_IdAndStartTimeLessThanAndEndTimeGreaterThan(

@@ -9,6 +9,7 @@ import trip.diary.dto.TripDayBulkUpdateRequest;
 import trip.diary.entity.Place;
 import trip.diary.entity.TimelineItem;
 import trip.diary.entity.TripDay;
+import trip.diary.global.exception.NotFoundException;
 import trip.diary.repository.PlaceRepository;
 import trip.diary.repository.TimelineItemRepository;
 import trip.diary.repository.TripDayRepository;
@@ -189,7 +190,7 @@ public class TimelineService {
 
             //디비에 존재하는건지 확인
             if (day == null) {
-                throw new NoSuchElementException("TripDay not found: " + item.getDayId());
+                throw new NotFoundException("TripDay not found: " + item.getDayId());
             }
 
             //수정하기-> 알아서 저장됨(dirty checking)
